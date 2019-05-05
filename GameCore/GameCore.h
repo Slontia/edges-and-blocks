@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <set>
@@ -10,6 +12,7 @@ const int kAreaTypeCount = 3;
 
 const int kBlockCountAdjaceEdge = 2;
 const int kEdgeCountAdjaceBlock = 4;
+const int kEdgeCountAdjaceEdge = 6;
 
 /* We MUST place NO_PLAYER end, since we can build both an array without or with NO_PLAYER.
  */
@@ -72,17 +75,20 @@ class EdgeArea : public Area
 {
 public:  
   typedef std::array<BlockAreaPtr, kBlockCountAdjaceEdge> AdjaceBlocks;
+  typedef std::array<EdgeAreaPtr, kEdgeCountAdjaceEdge> AdjaceEdges;
 private:
   AdjaceBlocks adjace_blocks_;
+  AdjaceEdges adjace_edges_;
 public:
   EdgeArea(const Coordinate& pos, const AreaType& edge_type, std::array<int, kPlayerTypeCount>& player_counts);
   ~EdgeArea();
-  void set_adjace(AdjaceBlocks&& adjace_blocks);
+  void set_adjace(AdjaceBlocks&& adjace_blocks, AdjaceEdges&& adjace_edges);
   BlockAreaPtr get_another_block(const BlockArea& block);
   AdjaceBlocks get_adjace_blocks()
   {
     return adjace_blocks_;
   }
+  bool is_adjace(const EdgeArea& edge);
 };
 
 class Board
@@ -104,8 +110,8 @@ public:
   bool is_valid_pos(const Coordinate& pos) const;
   BlockAreaPtr get_block(const Coordinate& pos);
   EdgeAreaPtr get_edge(const Coordinate& pos, const AreaType& edge_type);
-  const OccuCounts& get_block_occu_counts();
-  const OccuCounts& get_edge_occu_counts();
+  const OccuCounts& get_block_occu_counts() const;
+  const OccuCounts& get_edge_occu_counts() const;
 };
 
 struct AreaVariety
@@ -163,5 +169,14 @@ public:
   {
     return winner_;
   }
+  const Board& get_board() const
+  {
+    return board_;
+  }
 };
 
+class game_exception : public std::exception
+{
+public:
+  game_exception(char* msg) : std::exception(msg) {}
+};

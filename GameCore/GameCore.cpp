@@ -82,9 +82,22 @@ EdgeArea::EdgeArea(const Coordinate& pos, const AreaType& edge_type, std::array<
 
 EdgeArea::~EdgeArea() {}
 
-void EdgeArea::set_adjace(AdjaceBlocks&& adjace_blocks)
+void EdgeArea::set_adjace(AdjaceBlocks&& adjace_blocks, AdjaceEdges&& adjace_edges)
 {
   adjace_blocks_ = adjace_blocks;
+  adjace_edges_ = adjace_edges;
+}
+
+bool EdgeArea::is_adjace(const EdgeArea& edge)
+{
+  for (const EdgeAreaPtr& e : adjace_edges_)
+  {
+    if (edge == *e)
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 /* Assume block is one of the adjacent blocks.
@@ -104,9 +117,11 @@ BlockAreaPtr EdgeArea::get_another_block(const BlockArea& block)
   return another_block;
 }
 
-Board::Board(const unsigned int& side_len) : side_len_(side_len)
+Board::Board(const unsigned int& side_len) : side_len_(side_len), block_occu_counts_{0}, edge_occu_counts_{0}
 {
   assert(side_len > 1);
+  block_occu_counts_[NO_PLAYER] = side_len * side_len;
+  edge_occu_counts_[NO_PLAYER] = side_len * side_len * 2;
   build_board();
   init_board();
 }
@@ -147,11 +162,27 @@ void Board::init_board()
       {
         blocks_[x][y],
         blocks_[x][(y - 1) % side_len_]
+      },
+      {
+        hori_edges_[(x - 1) % side_len_][y],
+        hori_edges_[(x + 1) % side_len_][y],
+        vert_edges_[x][y],
+        vert_edges_[(x + 1) % side_len_][y],
+        vert_edges_[x][(y - 1) % side_len_],
+        vert_edges_[(x + 1) % side_len_][(y - 1) % side_len_]
       });
       vert_edges_[x][y]->set_adjace(
       {
         blocks_[x][y],
         blocks_[(x - 1) % side_len_][y]
+      },
+      {
+        vert_edges_[x][(y - 1) % side_len_],
+        vert_edges_[x][(y + 1) % side_len_],
+        hori_edges_[x][y],
+        hori_edges_[(x - 1) % side_len_][y],
+        hori_edges_[x][(y + 1) % side_len_],
+        hori_edges_[(x - 1) % side_len_][(y + 1) % side_len_]
       });
     }
   }
@@ -180,12 +211,12 @@ EdgeAreaPtr Board::get_edge(const Coordinate& pos, const AreaType& edge_type)
   return nullptr;
 }
 
-const Board::OccuCounts& Board::get_block_occu_counts()
+const Board::OccuCounts& Board::get_block_occu_counts() const
 {
   return block_occu_counts_;
 }
 
-const Board::OccuCounts& Board::get_edge_occu_counts()
+const Board::OccuCounts& Board::get_edge_occu_counts() const
 {
   return edge_occu_counts_;
 }
@@ -307,25 +338,25 @@ void Game::supply_edges(const Board::OccuCounts& occu_counts_record)
 void check_edge_type(const AreaType& edge_type)
 {
   if (edge_type != HORI_EDGE_AREA && edge_type != VERT_EDGE_AREA)
-    throw "Invalid edge area type.";
+    throw game_exception("Invalid edge area type.");
 }
 
 void check_game_not_over(const Game& game)
 {
   if (game.get_winner().has_value())
-    throw "Game is over.";
+    throw game_exception("Game is over.");
 }
 
 void check_player(const PlayerType& player)
 {
   if (player == NO_PLAYER)
-    throw "Invalid player type.";
+    throw game_exception("Invalid player type.");
 }
 
 void check_pos(const Coordinate& pos, const Board& board)
 {
   if (!board.is_valid_pos(pos))
-    throw "Invalid position.";
+    throw game_exception("Invalid position.");
 }
 
 PlayerType Game::get_oppo_player(const PlayerType& p)
@@ -346,11 +377,11 @@ GameVariety Game::Place(const AreaType& edge_type, const Coordinate& pos, const 
   check_player(p);
 
   if (edge_own_counts_[p] <= 0)
-    throw "Player has no edges to place.";
+    throw game_exception("Player has no edges to place.");
 
   EdgeAreaPtr edge = board_.get_edge(pos, edge_type);
   if (edge->get_player() != NO_PLAYER)
-    throw "The edge has been occupied.";
+    throw game_exception("The edge has been occupied.");
 
   GameVariety variety;
   variety.push(edge->set_player(p));
@@ -377,11 +408,14 @@ GameVariety Game::Move(const AreaType& old_edge_type, const Coordinate& old_pos,
 
   EdgeAreaPtr old_edge = board_.get_edge(old_pos, old_edge_type);
   if (old_edge->get_player() != p)
-    throw "Player is moving an edge which has not been occupied.";
+    throw game_exception("Player is moving an edge which has not been occupied.");
 
   EdgeAreaPtr new_edge = board_.get_edge(new_pos, new_edge_type);
   if (new_edge->get_player() != NO_PLAYER)
-    throw "The destination edge has been occupied.";
+    throw game_exception("The destination edge has been occupied.");
+
+  if (!old_edge->is_adjace(*new_edge))
+    throw game_exception("Cannot move edge there.");
 
   GameVariety variety;
   variety.push(old_edge->set_player(NO_PLAYER));
@@ -396,3 +430,5 @@ GameVariety Game::Move(const AreaType& old_edge_type, const Coordinate& old_pos,
   judge_over();
   return variety;
 }
+
+
