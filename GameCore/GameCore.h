@@ -141,10 +141,10 @@ typedef std::shared_ptr<GameVariety> GameVarietyPtr;
 class Game
 {
 public:
-  static const int kWinnerBlockOccuCount = 5;
-  static const int kInitOffenEdgeOwnCount = 6;
-  static const int kInitDefenEdgeOwnCount = 7;
-  static const int kBoardSideLen = 8;
+  static const unsigned int kWinnerBlockOccuCount = 5;
+  static const unsigned int kInitOffenEdgeOwnCount = 6;
+  static const unsigned int kInitDefenEdgeOwnCount = 7;
+  static const unsigned int kBoardSideLen = 8;
 private:
   Board board_;  
   bool is_offen_turn_;
