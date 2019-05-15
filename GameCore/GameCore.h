@@ -134,6 +134,7 @@ public:
   void push(const AreaVariety& area_var);
   void clear();
   void to_next_time();
+  const std::vector<std::vector<AreaVariety>> get_varieties() const { return area_varieties_; }
 };
 
 typedef std::shared_ptr<GameVariety> GameVarietyPtr;
