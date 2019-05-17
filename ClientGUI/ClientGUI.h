@@ -8,6 +8,24 @@
 #include "../GameCore/GameCore.h"
 #include <cassert>
 #include <QMessageBox>
+#include <QPoint>
+#include <QLCDNumber>
+#include <QLabel>
+
+#include <windows.h>
+
+/*
+两个回调函数，一个触发变化，另一个置布尔型表示进入下一时间
+
+先调研qt槽函数怎么并发，实在不行用std::thread
+
+std::timed_mutex A
+std::mutex B
+
+用户点击的时候先释放锁A，再申请锁B，再申请锁
+变化开始的时候
+
+*/
 
 static const int kBlockSideLength = 45;
 static const int kEdgeWidth = 15;
@@ -55,10 +73,6 @@ public:
     return Coordinate {static_cast<unsigned int>(pos_.x()), static_cast<unsigned int>(pos_.y())};
   }
 };
-
-
-
-
 
 class BlockButton : public AreaButton
 {
@@ -115,7 +129,7 @@ public:
 
 
 
-class TurningSwitcher
+class TurningSwitcher : public QWidget
 {
 private:
   PlayerType turn_;
@@ -161,11 +175,49 @@ public:
   }
 };
 
-struct ClientManager
+class GameInfo : public QWidget
 {
-  Game game_;
-  TurningSwitcher turning_switcher_;
-  MovingSelectManager select_manager_;
+private:
+  const Game& game_;
+  QLCDNumber* offen_own_edge_count;
+  QLCDNumber* defen_own_edge_count;
+  QLCDNumber* offen_occu_block_count;
+  QLCDNumber* defen_occu_block_count;
+
+public:
+  GameInfo(QWidget* parent, const QPoint& location, const Game& game) : QWidget(parent), game_(game)
+  {
+    auto init_lcd = [&](QLCDNumber*& lcd, QColor color, QPoint location)
+    {
+      lcd = new QLCDNumber(this);
+      QPalette lcdpat = lcd->palette();
+      lcdpat.setColor(QPalette::Normal, QPalette::WindowText, color);
+      lcd->setPalette(lcdpat);
+      //lcd->setSegmentStyle(QLCDNumber::Flat);
+      lcd->setDigitCount(3);
+      //lcd->display(0);
+      lcd->move(location);
+      lcd->resize(50, 50);
+    };
+    (new QLabel("Edges Left", this))->move(0, 0);
+    init_lcd(offen_own_edge_count, Qt::black, QPoint(0, 20));
+    init_lcd(defen_own_edge_count, Qt::red, QPoint(0, 100));
+    (new QLabel("Blocks Occupied", this))->move(100, 0);
+    init_lcd(offen_occu_block_count, Qt::black, QPoint(100, 20));
+    init_lcd(defen_occu_block_count, Qt::red, QPoint(100, 100));
+    move(location);
+    resize(200, 200);
+    refresh_info();
+    show();
+  }
+
+  void refresh_info()
+  {
+    offen_occu_block_count->display(game_.get_board().get_block_occu_counts()[OFFEN_PLAYER]);
+    defen_occu_block_count->display(game_.get_board().get_block_occu_counts()[DEFEN_PLAYER]);
+    offen_own_edge_count->display(game_.get_edge_own_counts()[OFFEN_PLAYER]);
+    defen_own_edge_count->display(game_.get_edge_own_counts()[DEFEN_PLAYER]);
+  }
 };
 
 class ClientGUI : public QMainWindow
@@ -180,45 +232,65 @@ public:
   {
     auto edge = static_cast<EdgeButton*>(sender());
     if (edge->get_player() == NO_PLAYER)
-      try_act(manager_.select_manager_.get_edge(), edge);
-    else if (edge->get_player() == manager_.turning_switcher_.get_turn())
-      manager_.select_manager_.set_edge(edge);
+    {
+      try_act(edge);
+      select_manager_.clear_edge();
+      game_info.refresh_info();
+    }
+    else if (edge->get_player() == turning_switcher_.get_turn() && edge != select_manager_.get_edge())
+    {
+      select_manager_.set_edge(edge);
+    }
     else
-      manager_.select_manager_.clear_edge();
+    {
+      select_manager_.clear_edge();
+    }
   }
 
 private:
-  void try_act(const EdgeButton* selected_edge, const EdgeButton* target_edge)
+  void try_act(const EdgeButton* target_edge)
   {
+    const EdgeButton* selected_edge = select_manager_.get_edge();
     try
     {
       GameVariety var = selected_edge ?
-        manager_.game_.Move(selected_edge->get_edge_type(), selected_edge->get_pos(),
-                            target_edge->get_edge_type(), target_edge->get_pos(),
-                            manager_.turning_switcher_.get_turn()) :
-        manager_.game_.Place(target_edge->get_edge_type(), target_edge->get_pos(),
-                             manager_.turning_switcher_.get_turn());
+        game_.Move(selected_edge->get_edge_type(), selected_edge->get_pos(),
+                   target_edge->get_edge_type(), target_edge->get_pos(),
+                   turning_switcher_.get_turn()) :
+        game_.Place(target_edge->get_edge_type(), target_edge->get_pos(),
+                    turning_switcher_.get_turn());
       handle_game_variety(var);
-      manager_.turning_switcher_.switch_turn();
+      turning_switcher_.switch_turn();
     }
     catch (game_exception exp)
     {
       // TODO: show error
-      manager_.select_manager_.clear_edge();
     }
   }
 
-  void handle_game_variety(const GameVariety& game_var)
+  void handle_game_variety(GameVariety& game_var)
   {
     const auto& area_vars = game_var.get_varieties();
     for (const auto& vars : area_vars)
+    {
       for (const AreaVariety& var : vars)
         buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.old_player_, var.new_player_);
-  }
-
+      qApp->processEvents();
+      Sleep(kSleepMs);
+    }
+}
+  
 private:
+  const int kSleepMs = 200;
+  const QSize kWindowSize = QSize(800, 600);
+  const QPoint kBlockLocation = QPoint(20, 20);
+  const QPoint kGameInfoLocation = QPoint(600, 100);
+  const QPoint kTurningLocation = QPoint(600, 0);
   Ui::ClientGUIClass ui;
-  ClientManager manager_;
+  Game game_;
+  GameInfo game_info;
+  TurningSwitcher turning_switcher_;
+  MovingSelectManager select_manager_;
   std::array<std::array<std::array<AreaButton*, Game::kBoardSideLen>, Game::kBoardSideLen>, kAreaTypeCount> buttons_;
   void draw_board();
 };

@@ -6,6 +6,7 @@
 #include <optional> 
 #include <functional>
 #include <algorithm>
+#include <iostream>
 
 Area::Area(const Coordinate& pos, const AreaType& type, std::array<int, kPlayerTypeCount>& player_counts) : pos_(pos), type_(type), occu_player_(NO_PLAYER), player_counts_(player_counts) {}
 
@@ -45,14 +46,19 @@ void BlockArea::set_adjace(AdjaceEdges&& adjace_edges)
   adjace_edges_ = adjace_edges;
 }
 
+bool BlockArea::is_broken()
+{
+  if (occu_player_ == NO_PLAYER) return false;
+  for (const EdgeAreaPtr& edge : adjace_edges_)
+    if (const auto player = edge->get_player(); player != occu_player_ && player!= NO_PLAYER) return true;
+  return false;
+}
+
 bool BlockArea::is_occupied_by(const PlayerType& p)
 {
   assert(p != NO_PLAYER); 
   for (const EdgeAreaPtr& edge : adjace_edges_)
-  {
-    if (edge->get_player() != p)
-      return false;
-  }
+    if (edge->get_player() != p) return false;
   return true;
 }
 
@@ -273,7 +279,7 @@ BlockAreaPtr Game::try_capture_block_by(GameVariety& variety, BlockArea& block, 
     assert(block.get_player() == NO_PLAYER);
     variety.push(block.set_player(p));
   }
-  else if (get_oppo_player(p) == block.get_player())
+  else if (block.is_broken())
   {
     variety.push(block.set_player(NO_PLAYER));
   }
@@ -289,7 +295,7 @@ void Game::capture_adjace_blocks_by(GameVariety& variety, EdgeArea& edge, const 
   {
     variety.to_next_time();
     go_on_capture = false;
-    for (BlockAreaPtr& block : blocks)  
+    for (BlockAreaPtr& block : blocks)
     {
       if (block)
       {

@@ -67,6 +67,7 @@ public:
   BlockArea(const Coordinate& pos, std::array<int, kPlayerTypeCount>& player_counts);
   ~BlockArea(); 
   void set_adjace(AdjaceEdges&& adjace_edges);
+  bool is_broken();
   bool is_occupied_by(const PlayerType& p);
   EdgeAreaPtr is_captured_by(const PlayerType& p);
 };
@@ -134,7 +135,12 @@ public:
   void push(const AreaVariety& area_var);
   void clear();
   void to_next_time();
-  const std::vector<std::vector<AreaVariety>> get_varieties() const { return area_varieties_; }
+  const std::vector<std::vector<AreaVariety>> get_varieties()
+  {
+    while (!area_varieties_.empty() && area_varieties_.back().empty())
+      area_varieties_.pop_back();
+    return area_varieties_;
+  }
 };
 
 typedef std::shared_ptr<GameVariety> GameVarietyPtr;
@@ -144,7 +150,7 @@ class Game
 public:
   static const unsigned int kWinnerBlockOccuCount = 5;
   static const unsigned int kInitOffenEdgeOwnCount = 6;
-  static const unsigned int kInitDefenEdgeOwnCount = 7;
+  static const unsigned int kInitDefenEdgeOwnCount = 6;
   static const unsigned int kBoardSideLen = 8;
 private:
   Board board_;  
