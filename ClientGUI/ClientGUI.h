@@ -11,6 +11,7 @@
 #include <QPoint>
 #include <QLCDNumber>
 #include <QLabel>
+#include <functional>
 
 #include <windows.h>
 
@@ -129,12 +130,18 @@ public:
 
 
 
-class TurningSwitcher : public QWidget
+class TurningSwitcher : public QLCDNumber
 {
 private:
   PlayerType turn_;
 public:
-  TurningSwitcher() : turn_(OFFEN_PLAYER) {}
+  TurningSwitcher(QWidget* parent, const QPoint& location) : QLCDNumber(parent), turn_(OFFEN_PLAYER)
+  {
+    refresh_lcd();
+    setDigitCount(2);
+    move(location);
+    resize(100, 40);
+  }
   PlayerType get_turn() const
   {
     assert(turn_ != NO_PLAYER);
@@ -144,6 +151,14 @@ public:
   {
     assert(turn_ != NO_PLAYER);
     turn_ = (turn_ == OFFEN_PLAYER) ? DEFEN_PLAYER : OFFEN_PLAYER;
+    refresh_lcd();
+  }
+  void refresh_lcd()
+  {
+    display((turn_ == OFFEN_PLAYER) ? "P1" : "P2");
+    QPalette lcdpat = palette();
+    lcdpat.setColor(QPalette::Normal, QPalette::WindowText, (turn_ == OFFEN_PLAYER) ? Qt::black : Qt::red);
+    setPalette(lcdpat);
   }
 };
 
@@ -193,9 +208,7 @@ public:
       QPalette lcdpat = lcd->palette();
       lcdpat.setColor(QPalette::Normal, QPalette::WindowText, color);
       lcd->setPalette(lcdpat);
-      //lcd->setSegmentStyle(QLCDNumber::Flat);
       lcd->setDigitCount(3);
-      //lcd->display(0);
       lcd->move(location);
       lcd->resize(50, 50);
     };
@@ -208,7 +221,6 @@ public:
     move(location);
     resize(200, 200);
     refresh_info();
-    show();
   }
 
   void refresh_info()
@@ -217,6 +229,31 @@ public:
     defen_occu_block_count->display(game_.get_board().get_block_occu_counts()[DEFEN_PLAYER]);
     offen_own_edge_count->display(game_.get_edge_own_counts()[OFFEN_PLAYER]);
     defen_own_edge_count->display(game_.get_edge_own_counts()[DEFEN_PLAYER]);
+  }
+};
+
+class GameFunctions : public QWidget
+{
+private:
+  QPushButton* pass_;
+  QPushButton* retreat_;
+  QPushButton* draw_;
+  QPushButton* surrender_;
+
+public:
+  GameFunctions(QWidget* parent, const QPoint& location) : QWidget(parent)
+  {
+    auto init_btn = [&](QPushButton*& btn, const QString& text, const QPoint& location, const char* method)
+    {
+      btn = new QPushButton(text, this);
+      btn->resize(100, 30);
+      btn->move(location);
+      QObject::connect(btn, SIGNAL(clicked()), parent, method);
+    };
+    init_btn(pass_, "PASS", QPoint(0, 0), SLOT(PassButtonEvent()));
+    init_btn(retreat_, "RETREAT", QPoint(0, 40), SLOT(foo()));
+    move(location);
+    resize(100, 300);
   }
 };
 
@@ -246,6 +283,14 @@ public:
       select_manager_.clear_edge();
     }
   }
+
+  void PassButtonEvent()
+  {
+    select_manager_.clear_edge();
+    turning_switcher_.switch_turn();
+  }
+
+  void foo() {}
 
 private:
   void try_act(const EdgeButton* target_edge)
@@ -283,14 +328,16 @@ private:
 private:
   const int kSleepMs = 200;
   const QSize kWindowSize = QSize(800, 600);
-  const QPoint kBlockLocation = QPoint(20, 20);
+  const QPoint kBoardLocation = QPoint(20, 20);
+  const QPoint kTurningLocation = QPoint(600, 40);
   const QPoint kGameInfoLocation = QPoint(600, 100);
-  const QPoint kTurningLocation = QPoint(600, 0);
+  const QPoint kFunctionsLocation = QPoint(600, 270);
   Ui::ClientGUIClass ui;
   Game game_;
   GameInfo game_info;
   TurningSwitcher turning_switcher_;
   MovingSelectManager select_manager_;
+  GameFunctions functions_;
   std::array<std::array<std::array<AreaButton*, Game::kBoardSideLen>, Game::kBoardSideLen>, kAreaTypeCount> buttons_;
   void draw_board();
 };
