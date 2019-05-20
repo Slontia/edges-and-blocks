@@ -6,6 +6,7 @@
 
 #include "ui_ClientGUI.h"
 #include "../GameCore/GameCore.h"
+#include "../GameCore/game.h"
 #include <cassert>
 #include <QMessageBox>
 #include <QPoint>
@@ -25,6 +26,19 @@ std::mutex B
 
 用户点击的时候先释放锁A，再申请锁B，再申请锁
 变化开始的时候
+
+======
+
+可以考虑用户修改sleep时间，但是sleep时间算在消耗时间里
+
+======
+
+将Board作为独立的Widget
+创建functions传入数组，text + event_function
+
+======
+
+不是QWidget的就不要new了
 
 */
 
@@ -219,7 +233,7 @@ public:
     init_lcd(offen_occu_block_count, Qt::black, QPoint(100, 20));
     init_lcd(defen_occu_block_count, Qt::red, QPoint(100, 100));
     move(location);
-    resize(200, 200);
+    resize(200, 160);
     refresh_info();
   }
 
@@ -234,6 +248,8 @@ public:
 
 class GameFunctions : public QWidget
 {
+  Q_OBJECT
+
 private:
   QPushButton* pass_;
   QPushButton* retreat_;
@@ -243,15 +259,16 @@ private:
 public:
   GameFunctions(QWidget* parent, const QPoint& location) : QWidget(parent)
   {
-    auto init_btn = [&](QPushButton*& btn, const QString& text, const QPoint& location, const char* method)
+    auto init_btn = [&](QPushButton*& btn, const QString& text, const int& index, const char* handle)
     {
       btn = new QPushButton(text, this);
       btn->resize(100, 30);
-      btn->move(location);
-      QObject::connect(btn, SIGNAL(clicked()), parent, method);
+      btn->move(QPoint(0, 40 * index));
+      btn->setEnabled(true);
+      QObject::connect(btn, SIGNAL(clicked()), parent, handle);
     };
-    init_btn(pass_, "PASS", QPoint(0, 0), SLOT(PassButtonEvent()));
-    init_btn(retreat_, "RETREAT", QPoint(0, 40), SLOT(foo()));
+    init_btn(pass_, "PASS", 0, SLOT(PassButtonEvent()));
+    init_btn(retreat_, "RETREAT", 1, SIGNAL(retreat_signal()));
     move(location);
     resize(100, 300);
   }
@@ -272,9 +289,9 @@ public:
     {
       try_act(edge);
       select_manager_.clear_edge();
-      game_info.refresh_info();
+      game_info->refresh_info();
     }
-    else if (edge->get_player() == turning_switcher_.get_turn() && edge != select_manager_.get_edge())
+    else if (edge->get_player() == turning_switcher_->get_turn() && edge != select_manager_.get_edge())
     {
       select_manager_.set_edge(edge);
     }
@@ -284,10 +301,11 @@ public:
     }
   }
 
+  public slots:
   void PassButtonEvent()
   {
     select_manager_.clear_edge();
-    turning_switcher_.switch_turn();
+    turning_switcher_->switch_turn();
   }
 
   void foo() {}
@@ -301,11 +319,11 @@ private:
       GameVariety var = selected_edge ?
         game_.Move(selected_edge->get_edge_type(), selected_edge->get_pos(),
                    target_edge->get_edge_type(), target_edge->get_pos(),
-                   turning_switcher_.get_turn()) :
+                   turning_switcher_->get_turn()) :
         game_.Place(target_edge->get_edge_type(), target_edge->get_pos(),
-                    turning_switcher_.get_turn());
+                    turning_switcher_->get_turn());
       handle_game_variety(var);
-      turning_switcher_.switch_turn();
+      turning_switcher_->switch_turn();
     }
     catch (game_exception exp)
     {
@@ -326,6 +344,7 @@ private:
 }
   
 private:
+  QPushButton* pass_;
   const int kSleepMs = 200;
   const QSize kWindowSize = QSize(800, 600);
   const QPoint kBoardLocation = QPoint(20, 20);
@@ -334,10 +353,10 @@ private:
   const QPoint kFunctionsLocation = QPoint(600, 270);
   Ui::ClientGUIClass ui;
   Game game_;
-  GameInfo game_info;
-  TurningSwitcher turning_switcher_;
+  GameInfo* game_info;
+  TurningSwitcher* turning_switcher_;
   MovingSelectManager select_manager_;
-  GameFunctions functions_;
+  GameFunctions* functions_;
   std::array<std::array<std::array<AreaButton*, Game::kBoardSideLen>, Game::kBoardSideLen>, kAreaTypeCount> buttons_;
   void draw_board();
 };

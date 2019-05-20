@@ -145,13 +145,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="area.h" />
+    <ClInclude Include="board.h" />
+    <ClInclude Include="game.h" />
     <ClInclude Include="GameCore.h" />
+    <ClInclude Include="game_recorder.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="area.cpp" />
+    <ClCompile Include="board.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="game.cpp" />
     <ClCompile Include="GameCore.cpp" />
+    <ClCompile Include="game_recorder.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

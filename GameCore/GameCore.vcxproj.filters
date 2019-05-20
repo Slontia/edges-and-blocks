@@ -24,6 +24,18 @@
     <ClInclude Include="GameCore.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="area.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="board.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="game.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="game_recorder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -33,6 +45,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GameCore.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="area.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="board.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="game.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="game_recorder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

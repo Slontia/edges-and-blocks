@@ -12,11 +12,14 @@ std::unordered_map<int, QString> AreaButton::player2color_ =
 const QString EdgeButton::selected_color_ = "yellow";
 
 ClientGUI::ClientGUI(QWidget *parent)
-    : QMainWindow(parent), game_(), game_info(this, kGameInfoLocation, game_), turning_switcher_(this, kTurningLocation), functions_(this, kFunctionsLocation)
+    : QMainWindow(parent), game_()
 {
     ui.setupUi(this);
     setFixedSize(kWindowSize);
     draw_board();
+    turning_switcher_ = new TurningSwitcher(this, kTurningLocation);
+    functions_ = new GameFunctions(this, kFunctionsLocation);
+    game_info = new GameInfo(this, kGameInfoLocation, game_);
 }
 
 void ClientGUI::draw_board()
