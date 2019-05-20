@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "game.h"
 #include <cassert>
+#include <functional>
 
 Game::Game() : board_(kBoardSideLen), winner_(std::nullopt), is_offen_turn_(true)
 {
@@ -120,6 +121,22 @@ PlayerType Game::get_oppo_player(const PlayerType& p)
   return NO_PLAYER;
 }
 
+GameVariety Game::change_and_refresh(std::function<void(GameVariety&)> init_variety, EdgeArea& refresh_edge, const PlayerType& p)
+{
+  GameVariety variety;
+  init_variety(variety);
+
+  Board::OccuCounts occu_counts_record = record_edge_occu_counts();
+
+  capture_adjace_blocks_by(variety, refresh_edge, p);
+  capture_adjace_blocks_by(variety, refresh_edge, get_oppo_player(p));
+
+  supply_edges(occu_counts_record);
+  judge_over();
+  varieties_.push(variety);
+  return variety;
+}
+
 GameVariety Game::Place(const AreaType& edge_type, const Coordinate& pos, const PlayerType& p)
 {
   check_game_not_over(*this);
@@ -134,18 +151,11 @@ GameVariety Game::Place(const AreaType& edge_type, const Coordinate& pos, const 
   if (edge->get_player() != NO_PLAYER)
     throw game_exception("The edge has been occupied.");
 
-  GameVariety variety;
-  variety.push(edge->set_player(p));
-  --edge_own_counts_[p];
-
-  Board::OccuCounts occu_counts_record = record_edge_occu_counts();
-
-  capture_adjace_blocks_by(variety, *edge, p);
-  capture_adjace_blocks_by(variety, *edge, get_oppo_player(p));
-
-  supply_edges(occu_counts_record);
-  judge_over();
-  return variety;
+  return change_and_refresh([&](GameVariety& variety) 
+  {
+    variety.push(edge->set_player(p));
+    --edge_own_counts_[p];
+  }, *edge, p);
 }
 
 GameVariety Game::Move(const AreaType& old_edge_type, const Coordinate& old_pos, const AreaType& new_edge_type, const Coordinate& new_pos, const PlayerType& p)
@@ -168,16 +178,9 @@ GameVariety Game::Move(const AreaType& old_edge_type, const Coordinate& old_pos,
   if (!old_edge->is_adjace(*new_edge))
     throw game_exception("Cannot move edge there.");
 
-  GameVariety variety;
-  variety.push(old_edge->set_player(NO_PLAYER));
-  variety.push(new_edge->set_player(p));
-
-  Board::OccuCounts occu_counts_record = record_edge_occu_counts();
-
-  capture_adjace_blocks_by(variety, *new_edge, p);
-  capture_adjace_blocks_by(variety, *new_edge, get_oppo_player(p));
-
-  supply_edges(occu_counts_record);
-  judge_over();
-  return variety;
+  return change_and_refresh([&](GameVariety& variety) 
+  {
+    variety.push(old_edge->set_player(NO_PLAYER));
+    variety.push(new_edge->set_player(p));
+  }, *new_edge, p);
 }

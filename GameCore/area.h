@@ -6,8 +6,10 @@ class Area
 {
 private:
   std::array<int, kPlayerTypeCount>& player_counts_;
+
 protected:
   PlayerType occu_player_;
+
 public:
   const Coordinate pos_;
   const AreaType type_;
@@ -29,8 +31,10 @@ class BlockArea : public Area
 {
 public:
   typedef std::array<EdgeAreaPtr, kEdgeCountAdjaceBlock> AdjaceEdges;
+
 private:
   AdjaceEdges adjace_edges_;
+
 public:
   BlockArea(const Coordinate& pos, std::array<int, kPlayerTypeCount>& player_counts);
   ~BlockArea();
@@ -45,9 +49,11 @@ class EdgeArea : public Area
 public:
   typedef std::array<BlockAreaPtr, kBlockCountAdjaceEdge> AdjaceBlocks;
   typedef std::array<EdgeAreaPtr, kEdgeCountAdjaceEdge> AdjaceEdges;
+
 private:
   AdjaceBlocks adjace_blocks_;
   AdjaceEdges adjace_edges_;
+
 public:
   EdgeArea(const Coordinate& pos, const AreaType& edge_type, std::array<int, kPlayerTypeCount>& player_counts);
   ~EdgeArea();

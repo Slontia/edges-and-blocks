@@ -5,6 +5,7 @@ class Board
 {
 public:
   typedef std::array<int, kPlayerTypeCount> OccuCounts;
+
 private:
   unsigned int side_len_;
   std::vector<std::vector<BlockAreaPtr>> blocks_;
@@ -14,6 +15,7 @@ private:
   OccuCounts edge_occu_counts_;
   void build_board();
   void init_board();
+
 public:
   Board(const unsigned int& side_len);
   ~Board();

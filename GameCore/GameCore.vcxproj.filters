@@ -44,9 +44,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GameCore.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="area.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

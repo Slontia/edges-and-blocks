@@ -158,7 +158,6 @@
     <ClCompile Include="board.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="game.cpp" />
-    <ClCompile Include="GameCore.cpp" />
     <ClCompile Include="game_recorder.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
