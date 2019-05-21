@@ -1,11 +1,16 @@
 #pragma once
+#include <QWidget>
 #include <QPushButton>
 #include <unordered_map>
 #include <QPoint>
+#include <array>
 #include "../GameCore/GameCore.h"
+#include "../GameCore/game.h"
+#include <windows.h>
+#include "ui_ClientGUI.h"
 
 static const int kBlockSideLength = 45;
-static const int kEdgeWidth = 15;
+static const int kEdgeWidth = 16;
 static const int kGapWidth = 4;
 static const int kUnitWidth = kBlockSideLength + kEdgeWidth + kGapWidth * 2;
 
@@ -18,7 +23,7 @@ class AreaButton : public QPushButton
 protected:
   const AreaPos pos_;
   PlayerType player_;
-  AreaButton(const QPoint& board_loc, const QPoint& loc_offset, const AreaPos& pos, QWidget* parent);
+  AreaButton(const QPoint& loc_offset, const AreaPos& pos, QWidget* parent);
   void set_color(const QString& color);
 public:
   static std::unordered_map<int, QString> player2color_;
@@ -30,7 +35,7 @@ public:
 class BlockButton : public AreaButton
 {
 public:
-  BlockButton(const QPoint& board_loc, const AreaPos& pos, QWidget* parent);
+  BlockButton(const AreaPos& pos, QWidget* parent);
 };
 
 class EdgeButton : public AreaButton
@@ -40,8 +45,19 @@ public:
 public:
   static const QString selected_color_;
 public:
-  EdgeButton(const QPoint& board_loc, const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent);
+  EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent);
   void select();
   void cancel_select();
   AreaType get_edge_type() const;
+};
+
+class BoardWidget : public QWidget
+{
+private:
+  const int kSleepMs = 200;
+  std::array<std::array<std::array<AreaButton*, Game::kBoardSideLen>, Game::kBoardSideLen>, kAreaTypeCount> buttons_;
+
+public:
+  BoardWidget(QWidget* parent, const QPoint& location);
+  void handle_game_variety(GameVariety& game_var);
 };

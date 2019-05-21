@@ -42,6 +42,7 @@ class TurningSwitcher;
 class GameFunctions;
 class EdgeButton;
 class AreaButton;
+class BoardWidget;
 
 class ClientGUI : public QMainWindow
 {
@@ -56,7 +57,6 @@ public slots:
   
 private:
   QPushButton* pass_;
-  const int kSleepMs = 200;
   const QSize kWindowSize = QSize(800, 600);
   const QPoint kBoardLocation = QPoint(20, 20);
   const QPoint kTurningLocation = QPoint(600, 40);
@@ -68,8 +68,6 @@ private:
   GameInfo* game_info;
   TurningSwitcher* turning_switcher_;
   GameFunctions* functions_;
-  std::array<std::array<std::array<AreaButton*, Game::kBoardSideLen>, Game::kBoardSideLen>, kAreaTypeCount> buttons_;
-  void draw_board();
+  BoardWidget* board_;
   void try_act(const EdgeButton* target_edge);
-  void handle_game_variety(GameVariety& game_var);
 };

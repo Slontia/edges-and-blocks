@@ -10,11 +10,11 @@ std::unordered_map<int, QString> AreaButton::player2color_ =
 
 const QString EdgeButton::selected_color_ = "yellow";
 
-AreaButton::AreaButton(const QPoint& board_loc, const QPoint& loc_offset, const AreaPos& pos, QWidget* parent) :
+AreaButton::AreaButton(const QPoint& loc_offset, const AreaPos& pos, QWidget* parent) :
   QPushButton(parent), pos_(pos), player_(NO_PLAYER)
 {
   assert(pos.x() >= 0 && pos.y() >= 0);
-  move(board_loc + loc_offset + pos * kUnitWidth);
+  move(loc_offset + pos * kUnitWidth);
   set_color(player2color_[NO_PLAYER]);
 }
 
@@ -35,15 +35,15 @@ Coordinate AreaButton::get_pos() const
   return Coordinate {static_cast<unsigned int>(pos_.x()), static_cast<unsigned int>(pos_.y())};
 }
 
-BlockButton::BlockButton(const QPoint& board_loc, const AreaPos& pos, QWidget* parent) :
-  AreaButton(board_loc, QPoint(kZeroLoc, kZeroLoc), pos, parent)
+BlockButton::BlockButton(const AreaPos& pos, QWidget* parent) :
+  AreaButton(QPoint(kZeroLoc, kZeroLoc), pos, parent)
 {
   resize(kBlockSideLength, kBlockSideLength);
 }
 
 #define REVERSE_PARA(a, b, reverse) (reverse) ? (b) : (a), (reverse) ? (a) : (b)
-EdgeButton::EdgeButton(const QPoint& board_loc, const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent) :
-  AreaButton(board_loc, QPoint(REVERSE_PARA(kZeroLoc, 0, is_vert)), pos, parent), edge_type_(is_vert ? VERT_EDGE_AREA : HORI_EDGE_AREA)
+EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent) :
+  AreaButton(QPoint(REVERSE_PARA(kZeroLoc, 0, is_vert)), pos, parent), edge_type_(is_vert ? VERT_EDGE_AREA : HORI_EDGE_AREA)
 {
   assert(pos.x() < side_unit_num && pos.y() < side_unit_num);
   const bool& is_side_edge = (is_vert ? pos.x() : pos.y()) == 0;
@@ -59,7 +59,7 @@ EdgeButton::EdgeButton(const QPoint& board_loc, const int& side_unit_num, const 
   {
     resize(REVERSE_PARA(kBlockSideLength, kEdgeWidth, is_vert));
   }
-  connect(this, SIGNAL(clicked()), parent, SLOT(EdgeButtonEvent()));
+  connect(this, SIGNAL(clicked()), parent->parentWidget(), SLOT(EdgeButtonEvent()));
 }
 #undef REVERSE_PARA
 
@@ -76,4 +76,33 @@ void EdgeButton::cancel_select()
 AreaType EdgeButton::get_edge_type() const
 {
   return edge_type_;
+}
+
+BoardWidget::BoardWidget(QWidget* parent, const QPoint& location) : QWidget(parent)
+{
+  const int& side_unit_num = Game::kBoardSideLen;
+  for (int x = 0; x < side_unit_num; ++x)
+  {
+    for (int y = 0; y < side_unit_num; ++y)
+    {
+      const AreaPos pos(x, y);
+      buttons_[BLOCK_AREA][x][y] = new BlockButton(pos, this);
+      buttons_[HORI_EDGE_AREA][x][y] = new EdgeButton(side_unit_num, pos, false, this);
+      buttons_[VERT_EDGE_AREA][x][y] = new EdgeButton(side_unit_num, pos, true, this);
+    }
+  }
+  move(location);
+  resize(QSize(kUnitWidth, kUnitWidth) * Game::kBoardSideLen + QSize(kGapWidth + kEdgeWidth / 2, kGapWidth + kEdgeWidth / 2));
+}
+
+void BoardWidget::handle_game_variety(GameVariety& game_var)
+{
+  const auto& area_vars = game_var.get_varieties();
+  for (const auto& vars : area_vars)
+  {
+    for (const AreaVariety& var : vars)
+      buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.old_player_, var.new_player_);
+    qApp->processEvents();
+    Sleep(kSleepMs);
+  }
 }
