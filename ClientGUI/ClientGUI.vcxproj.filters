@@ -36,6 +36,21 @@
     <ClCompile Include="ClientGUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="board_widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game_funcs_widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game_info_widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="moving_selector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="switcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="ClientGUI.h">
@@ -51,5 +66,22 @@
     <QtRcc Include="ClientGUI.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="board_widget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="switcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="moving_selector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="game_info_widget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="game_funcs_widget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

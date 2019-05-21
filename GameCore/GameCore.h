@@ -37,3 +37,4 @@ class game_exception : public std::exception
 public:
   game_exception(char* msg) : std::exception(msg) {}
 };
+
