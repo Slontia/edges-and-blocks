@@ -1,5 +1,6 @@
 #include "board_widget.h"
 #include <cassert>
+#define REVERSE_PARA(a, b, reverse) (reverse) ? (b) : (a), (reverse) ? (a) : (b)
 
 std::unordered_map<int, QString> AreaButton::player2color_ =
 {
@@ -41,7 +42,7 @@ BlockButton::BlockButton(const AreaPos& pos, QWidget* parent) :
   resize(kBlockSideLength, kBlockSideLength);
 }
 
-#define REVERSE_PARA(a, b, reverse) (reverse) ? (b) : (a), (reverse) ? (a) : (b)
+
 EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent) :
   AreaButton(QPoint(REVERSE_PARA(kZeroLoc, 0, is_vert)), pos, parent), edge_type_(is_vert ? VERT_EDGE_AREA : HORI_EDGE_AREA)
 {
@@ -61,7 +62,6 @@ EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool&
   }
   connect(this, SIGNAL(clicked()), parent->parentWidget(), SLOT(EdgeButtonEvent()));
 }
-#undef REVERSE_PARA
 
 void EdgeButton::select()
 {
@@ -95,14 +95,22 @@ BoardWidget::BoardWidget(QWidget* parent, const QPoint& location) : QWidget(pare
   resize(QSize(kUnitWidth, kUnitWidth) * Game::kBoardSideLen + QSize(kGapWidth + kEdgeWidth / 2, kGapWidth + kEdgeWidth / 2));
 }
 
-void BoardWidget::handle_game_variety(GameVariety& game_var)
+void BoardWidget::impl_game_variety(const GameVariety& game_var)
 {
-  const auto& area_vars = game_var.get_varieties();
-  for (const auto& vars : area_vars)
+  for (const auto& vars : game_var.area_varieties_)
   {
+    if (vars.empty())
+      continue;
     for (const AreaVariety& var : vars)
       buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.old_player_, var.new_player_);
     qApp->processEvents();
     Sleep(kSleepMs);
   }
+}
+
+void BoardWidget::reset_game_variety(const GameVariety& game_var)
+{
+  for (const auto& vars : game_var.area_varieties_)
+    for (const auto& var: vars)
+      buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.new_player_, var.old_player_);
 }

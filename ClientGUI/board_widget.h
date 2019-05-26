@@ -59,5 +59,6 @@ private:
 
 public:
   BoardWidget(QWidget* parent, const QPoint& location);
-  void handle_game_variety(GameVariety& game_var);
+  void impl_game_variety(const GameVariety& game_var);
+  void reset_game_variety(const GameVariety& game_var);
 };

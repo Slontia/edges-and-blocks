@@ -1,12 +1,5 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <set>
-#include <array>
-#include <memory>
-#include <optional>
-
 const int kPlayerTypeCount = 3;
 const int kAreaTypeCount = 3;
 
@@ -30,11 +23,5 @@ struct Coordinate
 {
   unsigned int x_;
   unsigned int y_;
+  Coordinate(const unsigned int& x = 0, const unsigned int& y = 0) : x_(x), y_(y) {}
 };
-
-class game_exception : public std::exception
-{
-public:
-  game_exception(char* msg) : std::exception(msg) {}
-};
-

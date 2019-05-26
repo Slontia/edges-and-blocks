@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "game.h"
+#include "exception.h"
 #include <cassert>
 #include <functional>
 
@@ -10,6 +11,114 @@ Game::Game() : board_(kBoardSideLen), winner_(std::nullopt), is_offen_turn_(true
 }
 
 Game::~Game() {}
+
+GameVariety Game::Place(const AreaType& edge_type, const Coordinate& pos, const PlayerType& p)
+{
+  game_exception::check_game_not_over(*this);
+  game_exception::check_edge_type(edge_type);
+  game_exception::check_pos(pos, board_);
+  game_exception::check_player(p);
+
+  if (edge_own_counts_[p] <= 0)
+    throw game_exception("Player has no edges to place.");
+
+  auto edge = board_.get_edge(pos, edge_type);
+  if (edge->get_player() != NO_PLAYER)
+    throw game_exception("The edge has been occupied.");
+
+  return change_and_refresh([&](GameVariety& variety) 
+  {
+    variety.push(edge->set_player(p));
+    --edge_own_counts_[p];
+  }, *edge, p);
+}
+
+GameVariety Game::Move(const AreaType& old_edge_type, const Coordinate& old_pos, const AreaType& new_edge_type, const Coordinate& new_pos, const PlayerType& p)
+{
+  game_exception::check_game_not_over(*this);
+  game_exception::check_edge_type(old_edge_type);
+  game_exception::check_edge_type(new_edge_type);
+  game_exception::check_pos(old_pos, board_);
+  game_exception::check_pos(new_pos, board_);
+  game_exception::check_player(p);
+
+  EdgeAreaPtr old_edge = board_.get_edge(old_pos, old_edge_type);
+  if (old_edge->get_player() != p)
+    throw game_exception("Player is moving an edge which has not been occupied.");
+
+  EdgeAreaPtr new_edge = board_.get_edge(new_pos, new_edge_type);
+  if (new_edge->get_player() != NO_PLAYER)
+    throw game_exception("The destination edge has been occupied.");
+
+  if (!old_edge->is_adjace(*new_edge))
+    throw game_exception("Cannot move edge there.");
+
+  return change_and_refresh([&](GameVariety& variety) 
+  {
+    variety.push(old_edge->set_player(NO_PLAYER));
+    variety.push(new_edge->set_player(p));
+  }, *new_edge, p);
+}
+
+void Game::Pass()
+{
+  varieties_.push(GameVariety());
+}
+
+GameVariety Game::Retract()
+{
+  if (varieties_.empty())
+    throw game_exception("The board is empty now.");
+  GameVariety game_var = varieties_.top();
+  edge_own_counts_[OFFEN_PLAYER] -= game_var.offen_own_edge_count_variety_;
+  edge_own_counts_[DEFEN_PLAYER] -= game_var.defen_own_edge_count_variety_;
+  board_.reset_game_variety(game_var);
+  varieties_.pop();
+  return game_var;
+}
+
+GameVariety Game::change_and_refresh(std::function<void(GameVariety&)> change_func, EdgeArea& refresh_edge, const PlayerType& p)
+{
+  GameVariety game_var;
+  game_var.offen_own_edge_count_variety_ = -edge_own_counts_[OFFEN_PLAYER];
+  game_var.defen_own_edge_count_variety_ = -edge_own_counts_[DEFEN_PLAYER];
+  change_func(game_var);
+
+  /* Only when our edges were captured did we supply, so we record edge_occu_counts after change_func.  */
+  Board::OccuCounts occu_counts_record = record_edge_occu_counts();
+
+  capture_adjace_blocks_by(game_var, refresh_edge, p);
+  capture_adjace_blocks_by(game_var, refresh_edge, get_oppo_player(p));
+
+  supply_edges(game_var, occu_counts_record);
+  judge_over();
+
+  game_var.offen_own_edge_count_variety_ += edge_own_counts_[OFFEN_PLAYER];
+  game_var.defen_own_edge_count_variety_ += edge_own_counts_[DEFEN_PLAYER];
+
+  varieties_.push(game_var);
+  return game_var;
+}
+
+void Game::capture_adjace_blocks_by(GameVariety& variety, EdgeArea& edge, const PlayerType& p)
+{
+  assert(p != NO_PLAYER);
+  auto blocks = edge.get_adjace_blocks();
+  bool go_on_capture = false;
+  do
+  {
+    variety.to_next_time();
+    go_on_capture = false;
+    for (auto& block : blocks)
+    {
+      if (block)
+      {
+        block = try_capture_block_by(variety, *block, p);
+        go_on_capture = true;
+      }
+    }
+  } while (go_on_capture);
+}
 
 BlockAreaPtr Game::try_capture_block_by(GameVariety& variety, BlockArea& block, const PlayerType& p)
 {
@@ -30,26 +139,6 @@ BlockAreaPtr Game::try_capture_block_by(GameVariety& variety, BlockArea& block, 
     variety.push(block.set_player(NO_PLAYER));
   }
   return nullptr;
-}
-
-void Game::capture_adjace_blocks_by(GameVariety& variety, EdgeArea& edge, const PlayerType& p)
-{
-  assert(p != NO_PLAYER);
-  std::array<BlockAreaPtr, kBlockCountAdjaceEdge> blocks = edge.get_adjace_blocks();
-  bool go_on_capture = false;
-  do
-  {
-    variety.to_next_time();
-    go_on_capture = false;
-    for (BlockAreaPtr& block : blocks)
-    {
-      if (block)
-      {
-        block = try_capture_block_by(variety, *block, p);
-        go_on_capture = true;
-      }
-    }
-  } while (go_on_capture);
 }
 
 void Game::judge_over()
@@ -77,38 +166,14 @@ Board::OccuCounts Game::record_edge_occu_counts()
   return occu_counts_record;
 }
 
-void Game::supply_edges(const Board::OccuCounts& occu_counts_record)
+void Game::supply_edges(GameVariety& var, const Board::OccuCounts& occu_counts_record)
 {
-  auto supply_edges = [this, occu_counts_record](const PlayerType& p)
+  auto supply_edges_for = [&](const PlayerType& p)
   {
     edge_own_counts_[p] += std::max<int>(0, occu_counts_record[p] - board_.get_edge_occu_counts()[p]);
   };
-  supply_edges(OFFEN_PLAYER);
-  supply_edges(DEFEN_PLAYER);
-}
-
-void check_edge_type(const AreaType& edge_type)
-{
-  if (edge_type != HORI_EDGE_AREA && edge_type != VERT_EDGE_AREA)
-    throw game_exception("Invalid edge area type.");
-}
-
-void check_game_not_over(const Game& game)
-{
-  if (game.get_winner().has_value())
-    throw game_exception("Game is over.");
-}
-
-void check_player(const PlayerType& player)
-{
-  if (player == NO_PLAYER)
-    throw game_exception("Invalid player type.");
-}
-
-void check_pos(const Coordinate& pos, const Board& board)
-{
-  if (!board.is_valid_pos(pos))
-    throw game_exception("Invalid position.");
+  supply_edges_for(OFFEN_PLAYER);
+  supply_edges_for(DEFEN_PLAYER);
 }
 
 PlayerType Game::get_oppo_player(const PlayerType& p)
@@ -121,66 +186,4 @@ PlayerType Game::get_oppo_player(const PlayerType& p)
   return NO_PLAYER;
 }
 
-GameVariety Game::change_and_refresh(std::function<void(GameVariety&)> init_variety, EdgeArea& refresh_edge, const PlayerType& p)
-{
-  GameVariety variety;
-  init_variety(variety);
 
-  Board::OccuCounts occu_counts_record = record_edge_occu_counts();
-
-  capture_adjace_blocks_by(variety, refresh_edge, p);
-  capture_adjace_blocks_by(variety, refresh_edge, get_oppo_player(p));
-
-  supply_edges(occu_counts_record);
-  judge_over();
-  varieties_.push(variety);
-  return variety;
-}
-
-GameVariety Game::Place(const AreaType& edge_type, const Coordinate& pos, const PlayerType& p)
-{
-  check_game_not_over(*this);
-  check_edge_type(edge_type);
-  check_pos(pos, board_);
-  check_player(p);
-
-  if (edge_own_counts_[p] <= 0)
-    throw game_exception("Player has no edges to place.");
-
-  EdgeAreaPtr edge = board_.get_edge(pos, edge_type);
-  if (edge->get_player() != NO_PLAYER)
-    throw game_exception("The edge has been occupied.");
-
-  return change_and_refresh([&](GameVariety& variety) 
-  {
-    variety.push(edge->set_player(p));
-    --edge_own_counts_[p];
-  }, *edge, p);
-}
-
-GameVariety Game::Move(const AreaType& old_edge_type, const Coordinate& old_pos, const AreaType& new_edge_type, const Coordinate& new_pos, const PlayerType& p)
-{
-  check_game_not_over(*this);
-  check_edge_type(old_edge_type);
-  check_edge_type(new_edge_type);
-  check_pos(old_pos, board_);
-  check_pos(new_pos, board_);
-  check_player(p);
-
-  EdgeAreaPtr old_edge = board_.get_edge(old_pos, old_edge_type);
-  if (old_edge->get_player() != p)
-    throw game_exception("Player is moving an edge which has not been occupied.");
-
-  EdgeAreaPtr new_edge = board_.get_edge(new_pos, new_edge_type);
-  if (new_edge->get_player() != NO_PLAYER)
-    throw game_exception("The destination edge has been occupied.");
-
-  if (!old_edge->is_adjace(*new_edge))
-    throw game_exception("Cannot move edge there.");
-
-  return change_and_refresh([&](GameVariety& variety) 
-  {
-    variety.push(old_edge->set_player(NO_PLAYER));
-    variety.push(new_edge->set_player(p));
-  }, *new_edge, p);
-}

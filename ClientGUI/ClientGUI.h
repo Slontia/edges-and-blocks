@@ -54,6 +54,7 @@ public:
 public slots:
  void EdgeButtonEvent();
  void PassButtonEvent();
+ void RetractButtonEvent();
   
 private:
   QPushButton* pass_;
@@ -65,9 +66,11 @@ private:
   Ui::ClientGUIClass ui;
   std::unique_ptr<Game> game_;
   std::unique_ptr<MovingSelectManager> select_manager_;
-  GameInfo* game_info;
+  GameInfo* game_info_;
   TurningSwitcher* turning_switcher_;
   GameFunctions* functions_;
   BoardWidget* board_;
   void try_act(const EdgeButton* target_edge);
+  void impl_game_variety(const GameVariety& game_var);
+  void reset_game_variety(const GameVariety& game_var);
 };

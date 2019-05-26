@@ -6,7 +6,7 @@ class GameFunctions : public QWidget
 {
 private:
   QPushButton* pass_;
-  QPushButton* retreat_;
+  QPushButton* retract_;
   QPushButton* draw_;
   QPushButton* surrender_;
 

@@ -1,5 +1,7 @@
 #pragma once
 #include "GameCore.h"
+#include <memory>
+#include <vector>
 
 class Area;
 
@@ -13,22 +15,16 @@ struct AreaVariety
   ~AreaVariety();
 };
 
-class GameVariety
+struct GameVariety
 {
-private:
   std::vector<std::vector<AreaVariety>> area_varieties_;
-public:
+  int offen_own_edge_count_variety_;
+  int defen_own_edge_count_variety_;
   GameVariety();
   ~GameVariety();
   void push(const AreaVariety& area_var);
   void clear();
   void to_next_time();
-  const std::vector<std::vector<AreaVariety>> get_varieties()
-  {
-    while (!area_varieties_.empty() && area_varieties_.back().empty())
-      area_varieties_.pop_back();
-    return area_varieties_;
-  }
 };
 
 typedef std::shared_ptr<GameVariety> GameVarietyPtr;

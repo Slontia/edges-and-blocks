@@ -6,7 +6,7 @@ AreaVariety::AreaVariety(const Area& area, const PlayerType& new_p) : type_(area
 
 AreaVariety::~AreaVariety() {}
 
-GameVariety::GameVariety()
+GameVariety::GameVariety() : offen_own_edge_count_variety_(0), defen_own_edge_count_variety_(0)
 {
   area_varieties_.emplace_back();
 }

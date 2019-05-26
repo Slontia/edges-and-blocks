@@ -11,7 +11,7 @@ GameFunctions::GameFunctions(QWidget* parent, const QPoint& location) : QWidget(
     QObject::connect(btn, SIGNAL(clicked()), parent, handle);
   };
   init_btn(pass_, "PASS", 0, SLOT(PassButtonEvent()));
-  init_btn(retreat_, "RETREAT", 1, SIGNAL(retreat_signal()));
+  init_btn(retract_, "RETRACT", 1, SLOT(RetractButtonEvent()));
   move(location);
   resize(100, 300);
 }

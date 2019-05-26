@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "area.h"
 #include <cassert>
+#include "board.h"
 
-Area::Area(const Coordinate& pos, const AreaType& type, std::array<int, kPlayerTypeCount>& player_counts) : pos_(pos), type_(type), occu_player_(NO_PLAYER), player_counts_(player_counts) {}
+Area::Area(Board& board, const Coordinate& pos, const AreaType& type, std::array<int, kPlayerTypeCount>& player_counts)
+  : board_(board), pos_(pos), type_(type), occu_player_(NO_PLAYER), player_counts_(player_counts) {}
 
 Area::~Area() {}
 
@@ -28,31 +30,45 @@ bool Area::operator==(const Area& area) const
 
 bool Area::operator!=(const Area& area) const
 {
-  return !this->operator==(area);
+  return !operator==(area);
 }
 
-BlockArea::BlockArea(const Coordinate& pos, std::array<int, kPlayerTypeCount>& player_counts) : Area(pos, BLOCK_AREA, player_counts) {}
+BlockArea::BlockArea(Board& board, const Coordinate& pos, std::array<int, kPlayerTypeCount>& player_counts) : 
+  Area(board, pos, BLOCK_AREA, player_counts){}
 
 BlockArea::~BlockArea() {}
 
-void BlockArea::set_adjace(AdjaceEdges&& adjace_edges)
+BlockArea::AdjaceEdges BlockArea::get_adjace_edges()
 {
-  adjace_edges_ = adjace_edges;
+  auto get_edge = [this](const unsigned int& x, const unsigned int& y, const AreaType& type)
+  {
+    assert(type == HORI_EDGE_AREA || type == VERT_EDGE_AREA);
+    return std::dynamic_pointer_cast<EdgeArea>(board_.get_area_safe(Coordinate(x, y), type));
+  };
+  return AdjaceEdges {
+    get_edge(pos_.x_, pos_.y_, HORI_EDGE_AREA),
+    get_edge(pos_.x_, pos_.y_ + 1, HORI_EDGE_AREA),
+    get_edge(pos_.x_, pos_.y_, VERT_EDGE_AREA),
+    get_edge(pos_.x_ + 1, pos_.y_, VERT_EDGE_AREA)
+  };
 }
 
 bool BlockArea::is_broken()
 {
-  if (occu_player_ == NO_PLAYER) return false;
-  for (const EdgeAreaPtr& edge : adjace_edges_)
-    if (const auto player = edge->get_player(); player != occu_player_ && player != NO_PLAYER) return true;
+  if (occu_player_ == NO_PLAYER) 
+    return false;
+  for (const auto& edge : get_adjace_edges())
+    if (const auto player = edge->get_player(); player != occu_player_ && player != NO_PLAYER)
+      return true;
   return false;
 }
 
 bool BlockArea::is_occupied_by(const PlayerType& p)
 {
   assert(p != NO_PLAYER);
-  for (const EdgeAreaPtr& edge : adjace_edges_)
-    if (edge->get_player() != p) return false;
+  for (const auto& edge : get_adjace_edges())
+    if (edge->get_player() != p)
+      return false;
   return true;
 }
 
@@ -61,7 +77,7 @@ EdgeAreaPtr BlockArea::is_captured_by(const PlayerType& p)
   assert(p != NO_PLAYER);
   const PlayerType oppo = (p == DEFEN_PLAYER) ? OFFEN_PLAYER : DEFEN_PLAYER;
   EdgeAreaPtr oppo_edge = nullptr;
-  for (EdgeAreaPtr edge : adjace_edges_)
+  for (const auto& edge : get_adjace_edges())
   {
     if (edge->get_player() == NO_PLAYER)
       return nullptr; // has free edge
@@ -75,28 +91,62 @@ EdgeAreaPtr BlockArea::is_captured_by(const PlayerType& p)
   return oppo_edge;
 }
 
-EdgeArea::EdgeArea(const Coordinate& pos, const AreaType& edge_type, std::array<int, kPlayerTypeCount>& player_counts) : Area(pos, edge_type, player_counts)
-{
+EdgeArea::EdgeArea(Board& board, const Coordinate& pos, const AreaType& edge_type, std::array<int, kPlayerTypeCount>& player_counts) : 
+  Area(board, pos, edge_type, player_counts)
+{ 
   assert(edge_type == HORI_EDGE_AREA || edge_type == VERT_EDGE_AREA);
 }
 
 EdgeArea::~EdgeArea() {}
 
-void EdgeArea::set_adjace(AdjaceBlocks&& adjace_blocks, AdjaceEdges&& adjace_edges)
+EdgeArea::AdjaceBlocks EdgeArea::get_adjace_blocks()
 {
-  adjace_blocks_ = adjace_blocks;
-  adjace_edges_ = adjace_edges;
+  auto get_block = [this](const unsigned int& x, const unsigned int& y)
+  {
+    return std::dynamic_pointer_cast<BlockArea>(board_.get_area_safe(Coordinate(x, y), BLOCK_AREA));
+  };
+  return (type_ == HORI_EDGE_AREA) ? AdjaceBlocks {
+    /* HORI_EDGE_AREA */
+    get_block(pos_.x_, pos_.y_),
+    get_block(pos_.x_, pos_.y_ - 1)
+  } : AdjaceBlocks {
+    /* VERT_EDGE_AREA */
+    get_block(pos_.x_, pos_.y_),
+    get_block(pos_.x_ - 1, pos_.y_)
+  };
+}
+
+EdgeArea::AdjaceEdges EdgeArea::get_adjace_edges()
+{
+  auto get_edge = [this](const unsigned int& x, const unsigned int& y, const AreaType& type)
+  {
+    assert(type == HORI_EDGE_AREA || type == VERT_EDGE_AREA);
+    return std::dynamic_pointer_cast<EdgeArea>(board_.get_area_safe(Coordinate(x, y), type));
+  };
+  return (type_ == HORI_EDGE_AREA) ? AdjaceEdges {
+    /* HORI_EDGE_AREA */
+    get_edge(pos_.x_ - 1, pos_.y_, HORI_EDGE_AREA),
+    get_edge(pos_.x_ + 1, pos_.y_, HORI_EDGE_AREA),
+    get_edge(pos_.x_, pos_.y_, VERT_EDGE_AREA),
+    get_edge(pos_.x_ + 1, pos_.y_, VERT_EDGE_AREA),
+    get_edge(pos_.x_, pos_.y_ - 1, VERT_EDGE_AREA),
+    get_edge(pos_.x_ + 1, pos_.y_ - 1, VERT_EDGE_AREA)
+  } : AdjaceEdges {
+    /* VERT_EDGE_AREA */
+    get_edge(pos_.x_, pos_.y_ - 1, VERT_EDGE_AREA),
+    get_edge(pos_.x_, pos_.y_ + 1, VERT_EDGE_AREA),
+    get_edge(pos_.x_, pos_.y_, HORI_EDGE_AREA),
+    get_edge(pos_.x_ - 1, pos_.y_, HORI_EDGE_AREA),
+    get_edge(pos_.x_, pos_.y_ + 1, HORI_EDGE_AREA),
+    get_edge(pos_.x_ - 1, pos_.y_ + 1, HORI_EDGE_AREA)
+  };
 }
 
 bool EdgeArea::is_adjace(const EdgeArea& edge)
 {
-  for (const EdgeAreaPtr& e : adjace_edges_)
-  {
-    if (edge == *e)
-    {
+  for (const auto& adjaced_edge : get_adjace_edges())
+    if (edge == *adjaced_edge)
       return true;
-    }
-  }
   return false;
 }
 
@@ -104,15 +154,9 @@ bool EdgeArea::is_adjace(const EdgeArea& edge)
 */
 BlockAreaPtr EdgeArea::get_another_block(const BlockArea& block)
 {
-  BlockAreaPtr another_block = nullptr;
-  for (const BlockAreaPtr& b : adjace_blocks_)
-  {
-    if (*b != block) // different blocks
-    {
-      assert(!another_block);
-      another_block = b;
-    }
-  }
-  assert(another_block);
-  return another_block;
+  for (auto& adjaced_block : get_adjace_blocks())
+    if (block != *adjaced_block)
+      return adjaced_block;
+  assert(false);
+  return nullptr;
 }

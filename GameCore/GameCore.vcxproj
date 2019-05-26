@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="area.h" />
     <ClInclude Include="board.h" />
+    <ClInclude Include="exception.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="GameCore.h" />
     <ClInclude Include="game_recorder.h" />
@@ -157,6 +158,7 @@
     <ClCompile Include="area.cpp" />
     <ClCompile Include="board.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="exception.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="game_recorder.cpp" />
     <ClCompile Include="stdafx.cpp">
