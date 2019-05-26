@@ -74,6 +74,7 @@ GameVariety Game::Retract()
   edge_own_counts_[DEFEN_PLAYER] -= game_var.defen_own_edge_count_variety_;
   board_.reset_game_variety(game_var);
   varieties_.pop();
+  winner_.reset();
   return game_var;
 }
 
@@ -185,5 +186,3 @@ PlayerType Game::get_oppo_player(const PlayerType& p)
   assert(false);
   return NO_PLAYER;
 }
-
-
