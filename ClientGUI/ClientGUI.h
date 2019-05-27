@@ -3,6 +3,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QPushButton>
 #include <unordered_map>
+#include <QTextEdit>
 
 #include "ui_ClientGUI.h"
 #include "../GameCore/GameCore.h"
@@ -63,9 +64,11 @@ private:
   const QPoint kTurningLocation = QPoint(600, 40);
   const QPoint kGameInfoLocation = QPoint(600, 100);
   const QPoint kFunctionsLocation = QPoint(600, 270);
+  const QPoint kNotificationLocation = QPoint(600, 400);
   Ui::ClientGUIClass ui;
   std::unique_ptr<Game> game_;
   std::unique_ptr<MovingSelectManager> select_manager_;
+  QTextEdit* notification_;
   GameInfo* game_info_;
   TurningSwitcher* turning_switcher_;
   GameFunctions* functions_;

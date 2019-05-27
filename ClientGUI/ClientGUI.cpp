@@ -16,10 +16,15 @@ ClientGUI::ClientGUI(QWidget *parent)
     functions_ = new GameFunctions(this, kFunctionsLocation);
     game_info_ = new GameInfo(this, kGameInfoLocation, *game_);
     board_ = new BoardWidget(this, kBoardLocation);
+    notification_ = new QTextEdit(this);
+    notification_->move(kNotificationLocation);
+    notification_->resize(160, 80);
+    notification_->setEnabled(false);
 }
 
 void ClientGUI::EdgeButtonEvent()
 {
+  notification_->clear();
   auto edge = static_cast<EdgeButton*>(sender());
   if (edge->get_player() == NO_PLAYER)
   {
@@ -52,14 +57,15 @@ void ClientGUI::try_act(const EdgeButton* target_edge)
     impl_game_variety(game_var);
     turning_switcher_->switch_turn();
   }
-  catch (const game_exception exp)
+  catch (const game_exception e)
   {
-    // TODO: show error
+    notification_->setText(e.what());
   }
 }
 
 void ClientGUI::PassButtonEvent()
 {
+  notification_->clear();
   game_->Pass();
   select_manager_->clear_edge();
   turning_switcher_->switch_turn();
@@ -67,6 +73,7 @@ void ClientGUI::PassButtonEvent()
 
 void ClientGUI::RetractButtonEvent()
 {
+  notification_->clear();
   try
   {
     GameVariety game_var = game_->Retract();
@@ -75,7 +82,7 @@ void ClientGUI::RetractButtonEvent()
   }
   catch (const game_exception& e)
   {
-    // TODO: show error
+    notification_->setText(e.what());
   }
 }
 
