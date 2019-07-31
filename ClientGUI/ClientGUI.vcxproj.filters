@@ -83,5 +83,8 @@
     <ClInclude Include="game_funcs_widget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="new_game_widget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -37,6 +37,7 @@ std::mutex B
 
 */
 
+class ClientGUI;
 class MovingSelectManager;
 class GameInfo;
 class TurningSwitcher;
@@ -44,6 +45,25 @@ class GameFunctions;
 class EdgeButton;
 class AreaButton;
 class BoardWidget;
+
+class NewGameWidget : public QMainWindow
+{
+  Q_OBJECT
+
+public:
+  NewGameWidget(QWidget *parent) : QMainWindow(parent) 
+  {
+    setFixedSize(200, 100);
+    QPushButton *local_game = new QPushButton("Local Game", this);
+    QObject::connect(local_game, SIGNAL(clicked()), this, SLOT(open_client_gui()));
+  }
+
+public slots:
+  void open_client_gui();
+
+private:
+  ClientGUI* client_gui = nullptr;
+};
 
 class ClientGUI : public QMainWindow
 {
@@ -56,6 +76,7 @@ public slots:
  void EdgeButtonEvent();
  void PassButtonEvent();
  void RetractButtonEvent();
+ void show_new_game_widget();
   
 private:
   QPushButton* pass_;

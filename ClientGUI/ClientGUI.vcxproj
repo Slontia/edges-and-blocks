@@ -140,6 +140,7 @@
     <ClInclude Include="game_funcs_widget.h" />
     <ClInclude Include="game_info_widget.h" />
     <ClInclude Include="moving_selector.h" />
+    <ClInclude Include="new_game_widget.h" />
     <ClInclude Include="switcher.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

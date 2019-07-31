@@ -16,10 +16,16 @@ ClientGUI::ClientGUI(QWidget *parent)
     functions_ = new GameFunctions(this, kFunctionsLocation);
     game_info_ = new GameInfo(this, kGameInfoLocation, *game_);
     board_ = new BoardWidget(this, kBoardLocation);
+
     notification_ = new QTextEdit(this);
     notification_->move(kNotificationLocation);
     notification_->resize(160, 80);
     notification_->setEnabled(false);
+
+    QMenu *game_menu = menuBar()->addMenu(tr("Game"));
+    QAction *new_game_action = new QAction(tr("New Game"));
+    game_menu->addAction(new_game_action);
+    connect(new_game_action, SIGNAL(clicked()), this, SLOT(show_new_game_widget()));
 }
 
 void ClientGUI::EdgeButtonEvent()
@@ -98,4 +104,9 @@ void ClientGUI::reset_game_variety(const GameVariety& game_var)
   board_->reset_game_variety(game_var);
   game_info_->reset_game_variety(game_var);
   game_info_->refresh_occu_block_count();
+}
+
+void ClientGUI::show_new_game_widget()
+{
+  (static_cast<NewGameWidget*>(parentWidget()))->show();
 }

@@ -21,25 +21,7 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GameCore.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="area.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="board.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="game.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="game_recorder.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="exception.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="requests.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -47,28 +29,8 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="Server.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="area.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="board.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="game_recorder.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="game.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="exception.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="GameCore.rc">
-      <Filter>资源文件</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>
