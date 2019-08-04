@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../GameCore/GameCore.h"
-#include <winsock2.h>
+//#include <winsock2.h>
 #include <type_traits>
 #include <memory>
 #define MAX_REQUEST_SIZE 1024
@@ -85,7 +85,7 @@ void send_request(const R& request, SOCKET& socket)
     throw std::exception("Send request failed.");
 }
 
-void send_heartbeat(SOCKET& socket)
+inline void send_heartbeat(SOCKET& socket)
 {
   return send_request(HeartbeatRequest(), socket);
 }

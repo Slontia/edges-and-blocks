@@ -8,34 +8,9 @@
 #include "ui_ClientGUI.h"
 #include "../GameCore/GameCore.h"
 #include "../GameCore/game.h"
-#include <windows.h>
 #include "moving_selector.h"
 
-/*
-两个回调函数，一个触发变化，另一个置布尔型表示进入下一时间
-
-先调研qt槽函数怎么并发，实在不行用std::thread
-
-std::timed_mutex A
-std::mutex B
-
-用户点击的时候先释放锁A，再申请锁B，再申请锁
-变化开始的时候
-
-======
-
-可以考虑用户修改sleep时间，但是sleep时间算在消耗时间里
-
-======
-
-将Board作为独立的Widget
-创建functions传入数组，text + event_function
-
-======
-
-不是QWidget的就不要new了
-
-*/
+class Client;
 
 class ClientGUI;
 class MovingSelectManager;
@@ -46,25 +21,6 @@ class EdgeButton;
 class AreaButton;
 class BoardWidget;
 
-class NewGameWidget : public QMainWindow
-{
-  Q_OBJECT
-
-public:
-  NewGameWidget(QWidget *parent) : QMainWindow(parent) 
-  {
-    setFixedSize(200, 100);
-    QPushButton *local_game = new QPushButton("Local Game", this);
-    QObject::connect(local_game, SIGNAL(clicked()), this, SLOT(open_client_gui()));
-  }
-
-public slots:
-  void open_client_gui();
-
-private:
-  ClientGUI* client_gui = nullptr;
-};
-
 class ClientGUI : public QMainWindow
 {
   Q_OBJECT
@@ -73,11 +29,15 @@ public:
   ClientGUI(QWidget *parent = Q_NULLPTR);
 
 public slots:
- void EdgeButtonEvent();
- void PassButtonEvent();
- void RetractButtonEvent();
- void show_new_game_widget();
+ virtual void EdgeButtonEvent();
+ virtual void PassButtonEvent();
+ virtual void RetractButtonEvent();
+ virtual void show_new_game_widget();
   
+protected:
+  std::unique_ptr<Game> game_;
+  TurningSwitcher* turning_switcher_;
+
 private:
   QPushButton* pass_;
   const QSize kWindowSize = QSize(800, 600);
@@ -87,14 +47,29 @@ private:
   const QPoint kFunctionsLocation = QPoint(600, 270);
   const QPoint kNotificationLocation = QPoint(600, 400);
   Ui::ClientGUIClass ui;
-  std::unique_ptr<Game> game_;
   std::unique_ptr<MovingSelectManager> select_manager_;
   QTextEdit* notification_;
   GameInfo* game_info_;
-  TurningSwitcher* turning_switcher_;
   GameFunctions* functions_;
   BoardWidget* board_;
   void try_act(const EdgeButton* target_edge);
   void impl_game_variety(const GameVariety& game_var);
   void reset_game_variety(const GameVariety& game_var);
+};
+
+class ClientGUINetwork : public ClientGUI
+{
+  Q_OBJECT
+
+public:
+  ClientGUINetwork(std::unique_ptr<Client>& client, QWidget *parent = Q_NULLPTR);
+
+public slots:
+  virtual void EdgeButtonEvent();
+  virtual void PassButtonEvent();
+  virtual void RetractButtonEvent();
+
+private:
+  std::unique_ptr<Client> client_;
+  void receive_and_process_request();
 };

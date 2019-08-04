@@ -6,6 +6,7 @@
 #include <array>
 #include "../GameCore/GameCore.h"
 #include "../GameCore/game.h"
+#include <winsock2.h>
 #include <windows.h>
 #include "ui_ClientGUI.h"
 

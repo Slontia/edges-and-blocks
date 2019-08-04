@@ -155,8 +155,12 @@ bool EdgeArea::is_adjace(const EdgeArea& edge)
 BlockAreaPtr EdgeArea::get_another_block(const BlockArea& block)
 {
   for (auto& adjaced_block : get_adjace_blocks())
+  {
     if (block != *adjaced_block)
+    {
       return adjaced_block;
+    }
+  }
   assert(false);
   return nullptr;
 }
