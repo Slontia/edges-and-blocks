@@ -27,6 +27,7 @@ private:
 public:
   void wait_for_game_start();
   Request& receive_request();
+  template<class R> void send_request(const R& request) { ::send_request(request, sClient_); }
   bool is_offen();
 };
 

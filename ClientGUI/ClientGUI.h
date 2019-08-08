@@ -29,14 +29,17 @@ public:
   ClientGUI(QWidget *parent = Q_NULLPTR);
 
 public slots:
- virtual void EdgeButtonEvent();
- virtual void PassButtonEvent();
- virtual void RetractButtonEvent();
- virtual void show_new_game_widget();
+  void EdgeButtonEvent();
+  virtual void PassButtonEvent();
+  virtual void RetractButtonEvent();
+  virtual void show_new_game_widget();
   
 protected:
+  std::unique_ptr<MovingSelectManager> select_manager_;
   std::unique_ptr<Game> game_;
   TurningSwitcher* turning_switcher_;
+  virtual void try_act(const EdgeButton* target_edge);
+  void impl_game_variety(const GameVariety& game_var);
 
 private:
   QPushButton* pass_;
@@ -47,13 +50,10 @@ private:
   const QPoint kFunctionsLocation = QPoint(600, 270);
   const QPoint kNotificationLocation = QPoint(600, 400);
   Ui::ClientGUIClass ui;
-  std::unique_ptr<MovingSelectManager> select_manager_;
   QTextEdit* notification_;
   GameInfo* game_info_;
   GameFunctions* functions_;
   BoardWidget* board_;
-  void try_act(const EdgeButton* target_edge);
-  void impl_game_variety(const GameVariety& game_var);
   void reset_game_variety(const GameVariety& game_var);
 };
 
@@ -65,9 +65,12 @@ public:
   ClientGUINetwork(std::unique_ptr<Client>& client, QWidget *parent = Q_NULLPTR);
 
 public slots:
-  virtual void EdgeButtonEvent();
   virtual void PassButtonEvent();
   virtual void RetractButtonEvent();
+  void wait_for_act_if_defen();
+
+protected:
+  virtual void try_act(const EdgeButton* target_edge);
 
 private:
   std::unique_ptr<Client> client_;

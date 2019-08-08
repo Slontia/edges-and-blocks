@@ -113,9 +113,11 @@ void ClientGUI::show_new_game_widget()
   (static_cast<NewGameWidget*>(parentWidget()))->show();
 }
 
-ClientGUINetwork::ClientGUINetwork(std::unique_ptr<Client>& client, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
+ClientGUINetwork::ClientGUINetwork(std::unique_ptr<Client>& client, QWidget *parent) : client_(std::move(client)), ClientGUI(parent) {}
+
+void ClientGUINetwork::wait_for_act_if_defen()
 {
-  if (!client->is_offen())
+  if (!client_->is_offen())
   {
     receive_and_process_request();
   }
@@ -127,14 +129,16 @@ void ClientGUINetwork::receive_and_process_request()
   if (request.type_ == MOVE_REQUEST)
   {
     MoveRequest& move_request = reinterpret_cast<MoveRequest&>(request);
-    game_->Move(move_request.old_edge_type_, move_request.old_pos_,
-                move_request.new_edge_type_, move_request.new_pos_,
-                turning_switcher_->get_turn());
+    impl_game_variety(
+      game_->Move(move_request.old_edge_type_, move_request.old_pos_,
+                  move_request.new_edge_type_, move_request.new_pos_,
+                  turning_switcher_->get_turn()));
   }
   else if (request.type_ == PLACE_REQUEST)
   {
     PlaceRequest& place_request = reinterpret_cast<PlaceRequest&>(request);
-    game_->Place(place_request.edge_type_, place_request.pos_, turning_switcher_->get_turn());
+    impl_game_variety(
+      game_->Place(place_request.edge_type_, place_request.pos_, turning_switcher_->get_turn()));
   }
   else if (request.type_ == PASS_REQUEST)
   {
@@ -151,19 +155,29 @@ void ClientGUINetwork::receive_and_process_request()
   turning_switcher_->switch_turn();
 }
 
-void ClientGUINetwork::EdgeButtonEvent()
+void ClientGUINetwork::try_act(const EdgeButton* target_edge)
 {
-  ClientGUI::EdgeButtonEvent();
+  ClientGUI::try_act(target_edge);
+  if (const EdgeButton* selected_edge = select_manager_->get_edge())
+  {
+    client_->send_request(MoveRequest(selected_edge->get_edge_type(), selected_edge->get_pos(),
+                          target_edge->get_edge_type(), target_edge->get_pos()));
+  }
+  else
+  {
+    client_->send_request(PlaceRequest(target_edge->get_edge_type(), target_edge->get_pos()));
+  }
   receive_and_process_request();
 }
 
 void ClientGUINetwork::PassButtonEvent()
 {
   ClientGUI::PassButtonEvent();
+  client_->send_request(PassRequest());
   receive_and_process_request();
 }
 void ClientGUINetwork::RetractButtonEvent()
 {
-  ClientGUI::RetractButtonEvent();
+  /* TODO: send retract request */
   receive_and_process_request();
 }
