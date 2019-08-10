@@ -11,9 +11,6 @@
 #include "client.h"
 #pragma comment(lib, "ws2_32.lib")
 
-#define SERVER_PORT 5209 //ÕìÌý¶Ë¿Ú
-
-
 Client::Client() : sClient_(init_socket())
 {
   if (sClient_ == INVALID_SOCKET)
@@ -113,6 +110,7 @@ void Client::wait_for_game_start()
 
 Request& Client::receive_request()
 {
+  memset(request_buffer_, 0, MAX_REQUEST_SIZE);
   recv(sClient_, request_buffer_, MAX_REQUEST_SIZE, 0);
   return *reinterpret_cast<Request*>(request_buffer_);
 }

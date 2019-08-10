@@ -8,6 +8,7 @@
 #include "board_widget.h"
 #include "client.h"
 #include "new_game_widget.h"
+#include <QMessageBox>
 
 ClientGUI::ClientGUI(QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>()), select_manager_(std::make_unique<MovingSelectManager>())
@@ -51,24 +52,25 @@ void ClientGUI::EdgeButtonEvent()
   }
 }
 
-void ClientGUI::try_act(const EdgeButton* target_edge)
+bool ClientGUI::try_act(const EdgeButton* target_edge)
 {
   const EdgeButton* selected_edge = select_manager_->get_edge();
   try
   {
-    GameVariety game_var = selected_edge ?
+    impl_game_variety(selected_edge ?
       game_->Move(selected_edge->get_edge_type(), selected_edge->get_pos(),
                   target_edge->get_edge_type(), target_edge->get_pos(),
                   turning_switcher_->get_turn()) :
       game_->Place(target_edge->get_edge_type(), target_edge->get_pos(),
-                  turning_switcher_->get_turn());
-    impl_game_variety(game_var);
-    turning_switcher_->switch_turn();
+                  turning_switcher_->get_turn()));
   }
   catch (const game_exception e)
   {
     notification_->setText(e.what());
+    return false;
   }
+  turning_switcher_->switch_turn();
+  return true;
 }
 
 void ClientGUI::PassButtonEvent()
@@ -126,6 +128,7 @@ void ClientGUINetwork::wait_for_act_if_defen()
 void ClientGUINetwork::receive_and_process_request()
 {
   Request& request = client_->receive_request();
+  request = client_->receive_request();
   if (request.type_ == MOVE_REQUEST)
   {
     MoveRequest& move_request = reinterpret_cast<MoveRequest&>(request);
@@ -155,9 +158,9 @@ void ClientGUINetwork::receive_and_process_request()
   turning_switcher_->switch_turn();
 }
 
-void ClientGUINetwork::try_act(const EdgeButton* target_edge)
+bool ClientGUINetwork::try_act(const EdgeButton* target_edge)
 {
-  ClientGUI::try_act(target_edge);
+  if (!ClientGUI::try_act(target_edge)) return false;
   if (const EdgeButton* selected_edge = select_manager_->get_edge())
   {
     client_->send_request(MoveRequest(selected_edge->get_edge_type(), selected_edge->get_pos(),
@@ -168,6 +171,7 @@ void ClientGUINetwork::try_act(const EdgeButton* target_edge)
     client_->send_request(PlaceRequest(target_edge->get_edge_type(), target_edge->get_pos()));
   }
   receive_and_process_request();
+  return true;
 }
 
 void ClientGUINetwork::PassButtonEvent()

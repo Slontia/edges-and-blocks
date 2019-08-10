@@ -8,8 +8,6 @@
 #include <winsock2.h>
 #include "../Server/requests.h"
 
-#define SERVER_PORT 5208 //ÕìÌı¶Ë¿Ú
-
 class Client
 {
 private:

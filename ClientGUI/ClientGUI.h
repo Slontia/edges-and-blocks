@@ -38,7 +38,7 @@ protected:
   std::unique_ptr<MovingSelectManager> select_manager_;
   std::unique_ptr<Game> game_;
   TurningSwitcher* turning_switcher_;
-  virtual void try_act(const EdgeButton* target_edge);
+  virtual bool try_act(const EdgeButton* target_edge);
   void impl_game_variety(const GameVariety& game_var);
 
 private:
@@ -70,7 +70,7 @@ public slots:
   void wait_for_act_if_defen();
 
 protected:
-  virtual void try_act(const EdgeButton* target_edge);
+  virtual bool try_act(const EdgeButton* target_edge);
 
 private:
   std::unique_ptr<Client> client_;
