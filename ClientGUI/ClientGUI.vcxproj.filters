@@ -60,6 +60,9 @@
     <ClCompile Include="GeneratedFiles\Debug\moc_new_game_widget.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_client.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="ClientGUI.h">

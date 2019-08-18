@@ -12,4 +12,5 @@ private:
 
 public:
   GameFunctions(QWidget* parent, const QPoint& location);
+  void set_enable(bool enable);
 };

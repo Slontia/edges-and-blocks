@@ -4,13 +4,14 @@
 #include <QPushButton>
 #include <unordered_map>
 #include <QTextEdit>
+#include <QThread>
 
 #include "ui_ClientGUI.h"
 #include "../GameCore/GameCore.h"
 #include "../GameCore/game.h"
 #include "moving_selector.h"
 
-class Client;
+class ClientAsyncWrapper;
 
 class ClientGUI;
 class MovingSelectManager;
@@ -40,6 +41,7 @@ protected:
   TurningSwitcher* turning_switcher_;
   virtual bool try_act(const EdgeButton* target_edge);
   void impl_game_variety(const GameVariety& game_var);
+  void set_act_enable(bool enable);
 
 private:
   QPushButton* pass_;
@@ -62,17 +64,17 @@ class ClientGUINetwork : public ClientGUI
   Q_OBJECT
 
 public:
-  ClientGUINetwork(std::unique_ptr<Client>& client, QWidget *parent = Q_NULLPTR);
+  ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent = Q_NULLPTR);
 
 public slots:
   virtual void PassButtonEvent();
   virtual void RetractButtonEvent();
-  void wait_for_act_if_defen();
 
 protected:
   virtual bool try_act(const EdgeButton* target_edge);
 
 private:
-  std::unique_ptr<Client> client_;
+  std::unique_ptr<ClientAsyncWrapper> client_;
   void receive_and_process_request();
+  void receive_and_process_request_async();
 };

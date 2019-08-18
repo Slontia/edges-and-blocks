@@ -118,6 +118,7 @@
     <ClCompile Include="ClientGUI.cpp" />
     <ClCompile Include="game_funcs_widget.cpp" />
     <ClCompile Include="game_info_widget.cpp" />
+    <ClCompile Include="GeneratedFiles\Debug\moc_client.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_new_game_widget.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="moving_selector.cpp" />

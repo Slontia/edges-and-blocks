@@ -39,8 +39,7 @@ SOCKET Client::init_socket()
 
   //WinSock初始化
   wVersionRequested = MAKEWORD(2, 2); //希望使用的WinSock DLL的版本
-  ret = WSAStartup(wVersionRequested, &wsaData);
-  if (ret != 0)
+  if (WSAStartup(wVersionRequested, &wsaData) != 0)
   {
     printf("WSAStartup() failed!\n");
     return INVALID_SOCKET;
@@ -54,7 +53,7 @@ SOCKET Client::init_socket()
   }
 
   //创建Socket,使用TCP协议
-  sClient = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  sClient = socket(AF_INET, SOCK_STREAM, 0);
   if (sClient == INVALID_SOCKET)
   {
     WSACleanup();
@@ -81,7 +80,7 @@ SOCKET Client::init_socket()
 }
 
 
-void Client::wait_for_game_start()
+bool Client::wait_for_game_start()
 {
   char request_buffer[MAX_REQUEST_SIZE];
   Request *request = nullptr;
@@ -105,7 +104,7 @@ void Client::wait_for_game_start()
   {
     throw std::exception("Unexpected request from server before game start.");
   }
-  is_offen_ = reinterpret_cast<StartGameRequest*>(request)->is_offen_;
+  return reinterpret_cast<StartGameRequest*>(request)->is_offen_;
 }
 
 Request& Client::receive_request()
@@ -115,23 +114,48 @@ Request& Client::receive_request()
   return *reinterpret_cast<Request*>(request_buffer_);
 }
 
-bool Client::is_offen() { return is_offen_; }
+ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) {}
 
-
-/*
-void main()
+void ClientWorker::wait_for_game_start()
 {
-  std::unique_ptr<Client> client;
-  try
-  {
-    client = std::make_unique<Client>();
-    client->wait_for_game_start();
-  }
-  catch (const std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
-    return;
-  }
-  std::cout << "Game Start!" << std::endl;
-}*/
+  const bool& is_offen = client_->wait_for_game_start();
+  emit game_started(is_offen);
+}
 
+void ClientWorker::receive_request()
+{
+  const Request& request = client_->receive_request();
+  emit request_received(request);
+}
+  
+ClientAsyncWrapper::ClientAsyncWrapper() : worker_(new ClientWorker())
+{
+  connect(this, SIGNAL(wait_for_game_start()), worker_, SLOT(ClientWorker::wait_for_game_start()));
+  connect(this, SIGNAL(receive_request()), worker_, SLOT(ClientWorker::receive_request()));
+  connect(worker_, SIGNAL(ClientWorker::game_started(const bool&)), this, SLOT(exec_game_started_callback()));
+  connect(worker_, SIGNAL(ClientWorker::request_received(const Request&)), this, SLOT(exec_request_received_callback(const Request&)));
+
+  worker_->moveToThread(&thread_);
+  connect(&thread_, SIGNAL(QThread::finished()), worker_, SIGNAL(deleteLater()));
+  thread_.start();
+}
+
+ClientAsyncWrapper::~ClientAsyncWrapper()
+{
+  thread_.quit();
+  thread_.wait();
+}
+
+/* Does NOT thread safe. */
+void ClientAsyncWrapper::wait_for_game_start_async(GameStartedCallback f)
+{
+  game_started_f = f;
+  emit wait_for_game_start();
+}
+
+/* Does NOT thread safe. */
+void ClientAsyncWrapper::receive_request_async(RequestReceivedCallback f)
+{
+  req_recv_f = f;
+  emit receive_request();
+}

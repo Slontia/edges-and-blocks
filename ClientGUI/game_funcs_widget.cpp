@@ -15,3 +15,9 @@ GameFunctions::GameFunctions(QWidget* parent, const QPoint& location) : QWidget(
   move(location);
   resize(100, 300);
 }
+
+void GameFunctions::set_enable(bool enable)
+{
+  pass_->setEnabled(enable);
+  retract_->setEnabled(enable);
+}

@@ -9,6 +9,8 @@
 #include "client.h"
 #include "new_game_widget.h"
 #include <QMessageBox>
+#include <thread>
+#include <QThread>
 
 ClientGUI::ClientGUI(QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>()), select_manager_(std::make_unique<MovingSelectManager>())
@@ -115,47 +117,59 @@ void ClientGUI::show_new_game_widget()
   (static_cast<NewGameWidget*>(parentWidget()))->show();
 }
 
-ClientGUINetwork::ClientGUINetwork(std::unique_ptr<Client>& client, QWidget *parent) : client_(std::move(client)), ClientGUI(parent) {}
-
-void ClientGUINetwork::wait_for_act_if_defen()
+void ClientGUI::set_act_enable(bool enable)
 {
-  if (!client_->is_offen())
+  board_->set_enable(enable);
+  functions_->set_enable(enable);
+}
+
+ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
+{
+  if (is_offen)
   {
-    receive_and_process_request();
+    receive_and_process_request_async();
   }
+}
+
+void ClientGUINetwork::receive_and_process_request_async()
+{
+  set_act_enable(false);
 }
 
 void ClientGUINetwork::receive_and_process_request()
 {
-  Request& request = client_->receive_request();
-  request = client_->receive_request();
-  if (request.type_ == MOVE_REQUEST)
+  client_->receive_request_async([&](const Request& request)
   {
-    MoveRequest& move_request = reinterpret_cast<MoveRequest&>(request);
-    impl_game_variety(
-      game_->Move(move_request.old_edge_type_, move_request.old_pos_,
-                  move_request.new_edge_type_, move_request.new_pos_,
-                  turning_switcher_->get_turn()));
-  }
-  else if (request.type_ == PLACE_REQUEST)
-  {
-    PlaceRequest& place_request = reinterpret_cast<PlaceRequest&>(request);
-    impl_game_variety(
-      game_->Place(place_request.edge_type_, place_request.pos_, turning_switcher_->get_turn()));
-  }
-  else if (request.type_ == PASS_REQUEST)
-  {
-    game_->Pass();
-  }
-  else if (request.type_ == RETRACT_REQUEST)
-  {
-    /* TODO: handle retract */
-  }
-  else
-  {
-    /* TODO: handle unexpected requests */
-  }
-  turning_switcher_->switch_turn();
+    if (request.type_ == MOVE_REQUEST)
+    {
+      const MoveRequest& move_request = reinterpret_cast<const MoveRequest&>(request);
+
+      impl_game_variety(
+        game_->Move(move_request.old_edge_type_, move_request.old_pos_,
+        move_request.new_edge_type_, move_request.new_pos_,
+        turning_switcher_->get_turn()));
+    }
+    else if (request.type_ == PLACE_REQUEST)
+    {
+      const PlaceRequest& place_request = reinterpret_cast<const PlaceRequest&>(request);
+      impl_game_variety(
+        game_->Place(place_request.edge_type_, place_request.pos_, turning_switcher_->get_turn()));
+    }
+    else if (request.type_ == PASS_REQUEST)
+    {
+      game_->Pass();
+    }
+    else if (request.type_ == RETRACT_REQUEST)
+    {
+      /* TODO: handle retract */
+    }
+    else
+    {
+      /* TODO: handle unexpected requests */
+    }
+    turning_switcher_->switch_turn();
+    set_act_enable(true);
+  });
 }
 
 bool ClientGUINetwork::try_act(const EdgeButton* target_edge)
@@ -170,7 +184,7 @@ bool ClientGUINetwork::try_act(const EdgeButton* target_edge)
   {
     client_->send_request(PlaceRequest(target_edge->get_edge_type(), target_edge->get_pos()));
   }
-  receive_and_process_request();
+  receive_and_process_request_async();
   return true;
 }
 
@@ -178,10 +192,10 @@ void ClientGUINetwork::PassButtonEvent()
 {
   ClientGUI::PassButtonEvent();
   client_->send_request(PassRequest());
-  receive_and_process_request();
+  receive_and_process_request_async();
 }
 void ClientGUINetwork::RetractButtonEvent()
 {
   /* TODO: send retract request */
-  receive_and_process_request();
+  receive_and_process_request_async();
 }

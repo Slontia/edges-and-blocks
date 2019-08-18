@@ -114,3 +114,11 @@ void BoardWidget::reset_game_variety(const GameVariety& game_var)
     for (const auto& var: vars)
       buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.new_player_, var.old_player_);
 }
+
+void BoardWidget::set_enable(bool enable)
+{
+  for (const auto& area_btns : buttons_)
+    for (const auto& area_row_btns : area_btns)
+      for (const auto& button : area_row_btns)
+        button->setEnabled(enable);
+}

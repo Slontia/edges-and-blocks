@@ -21,12 +21,13 @@ void NewGameWidget::open_client_gui_network()
 {
   try
   {
-    auto client = std::make_unique<Client>();
-    client->wait_for_game_start();
-    /* We use shared_ptr instead of unique_ptr to support polymorphic. */
-    auto client_gui = std::make_shared<ClientGUINetwork>(client);
-    open_client_gui(std::dynamic_pointer_cast<ClientGUI>(client_gui));
-    client_gui->wait_for_act_if_defen();
+    auto client = std::make_unique<ClientAsyncWrapper>();
+    client->wait_for_game_start_async([&](bool is_offen)
+    {
+      /* We use shared_ptr instead of unique_ptr to support polymorphic. */
+      auto client_gui = std::make_shared<ClientGUINetwork>(client, is_offen);
+      open_client_gui(std::dynamic_pointer_cast<ClientGUI>(client_gui));
+    });
   }
   catch (std::exception& e)
   {
