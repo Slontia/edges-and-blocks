@@ -9,6 +9,7 @@
 #include <iostream>
 #include <exception>
 #include "client.h"
+#include <QDebug>
 #pragma comment(lib, "ws2_32.lib")
 
 Client::Client() : sClient_(init_socket())
@@ -116,6 +117,8 @@ Request& Client::receive_request()
 
 ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) {}
 
+ClientWorker::~ClientWorker() {}
+
 void ClientWorker::wait_for_game_start()
 {
   const bool& is_offen = client_->wait_for_game_start();
@@ -127,16 +130,17 @@ void ClientWorker::receive_request()
   const Request& request = client_->receive_request();
   emit request_received(request);
 }
-  
+
 ClientAsyncWrapper::ClientAsyncWrapper() : worker_(new ClientWorker())
 {
-  connect(this, SIGNAL(wait_for_game_start()), worker_, SLOT(ClientWorker::wait_for_game_start()));
-  connect(this, SIGNAL(receive_request()), worker_, SLOT(ClientWorker::receive_request()));
-  connect(worker_, SIGNAL(ClientWorker::game_started(const bool&)), this, SLOT(exec_game_started_callback()));
-  connect(worker_, SIGNAL(ClientWorker::request_received(const Request&)), this, SLOT(exec_request_received_callback(const Request&)));
-
   worker_->moveToThread(&thread_);
-  connect(&thread_, SIGNAL(QThread::finished()), worker_, SIGNAL(deleteLater()));
+
+  connect(this, SIGNAL(wait_for_game_start()), worker_, SLOT(wait_for_game_start()));
+  connect(this, SIGNAL(receive_request()), worker_, SLOT(receive_request()));
+  connect(worker_, SIGNAL(game_started(const bool&)), this, SLOT(exec_game_started_callback(const bool&)));
+  connect(worker_, SIGNAL(request_received(const Request&)), this, SLOT(exec_request_received_callback(const Request&)));
+  
+  connect(&thread_, SIGNAL(finished()), worker_, SLOT(deleteLater()));
   thread_.start();
 }
 

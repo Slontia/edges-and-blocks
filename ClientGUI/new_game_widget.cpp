@@ -2,6 +2,7 @@
 #include "ClientGUI.h"
 #include <iostream>
 #include "client.h"
+#include <QDebug>
 
 NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent)
 {
