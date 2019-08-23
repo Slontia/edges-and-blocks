@@ -134,10 +134,6 @@ ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, 
 void ClientGUINetwork::receive_and_process_request_async()
 {
   set_act_enable(false);
-}
-
-void ClientGUINetwork::receive_and_process_request()
-{
   client_->receive_request_async([&](const Request& request)
   {
     if (request.type_ == MOVE_REQUEST)

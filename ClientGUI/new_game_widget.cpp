@@ -4,7 +4,7 @@
 #include "client.h"
 #include <QDebug>
 
-NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent)
+NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nullptr)
 {
   setFixedSize(200, 100);
   QPushButton *local_game = new QPushButton("Local Game", this);
@@ -22,11 +22,11 @@ void NewGameWidget::open_client_gui_network()
 {
   try
   {
-    auto client = std::make_unique<ClientAsyncWrapper>();
-    client->wait_for_game_start_async([&](bool is_offen)
+    client_ = std::make_unique<ClientAsyncWrapper>();
+    client_->wait_for_game_start_async([&](bool is_offen)
     {
       /* We use shared_ptr instead of unique_ptr to support polymorphic. */
-      auto client_gui = std::make_shared<ClientGUINetwork>(client, is_offen);
+      auto client_gui = std::make_shared<ClientGUINetwork>(client_, is_offen);
       open_client_gui(std::dynamic_pointer_cast<ClientGUI>(client_gui));
     });
   }

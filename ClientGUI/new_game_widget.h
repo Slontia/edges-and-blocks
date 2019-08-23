@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <memory>
+#include "client.h"
 
 class ClientGUI;
 
@@ -19,6 +20,7 @@ public slots:
   void open_client_gui_network();
 
 private:
+  std::unique_ptr<ClientAsyncWrapper> client_;
   void open_client_gui(std::shared_ptr<ClientGUI>& client_gui);
 
 private:

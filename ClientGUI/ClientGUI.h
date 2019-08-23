@@ -75,6 +75,5 @@ protected:
 
 private:
   std::unique_ptr<ClientAsyncWrapper> client_;
-  void receive_and_process_request();
   void receive_and_process_request_async();
 };
