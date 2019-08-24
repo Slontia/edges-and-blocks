@@ -4,6 +4,7 @@
 //#include <winsock2.h>
 #include <type_traits>
 #include <memory>
+
 #define MAX_REQUEST_SIZE 1024
 #define SOCKET_ACT_OK(ret /* int */) ((ret) != SOCKET_ERROR && (ret) != 0)
 

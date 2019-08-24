@@ -115,7 +115,7 @@ Request& Client::receive_request()
   return *reinterpret_cast<Request*>(request_buffer_);
 }
 
-ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) {}
+ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) { qDebug() << "worker ready!"; }
 
 ClientWorker::~ClientWorker() {}
 
@@ -133,6 +133,7 @@ void ClientWorker::receive_request()
 
 ClientAsyncWrapper::ClientAsyncWrapper() : worker_(new ClientWorker())
 {
+  qDebug() << "Client Ready!";
   worker_->moveToThread(&thread_);
 
   connect(this, SIGNAL(wait_for_game_start()), worker_, SLOT(wait_for_game_start()));

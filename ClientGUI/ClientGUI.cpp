@@ -125,7 +125,7 @@ void ClientGUI::set_act_enable(bool enable)
 
 ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
 {
-  if (is_offen)
+  if (!is_offen)
   {
     receive_and_process_request_async();
   }

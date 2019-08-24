@@ -9,6 +9,7 @@
 #include "../Server/requests.h"
 #include <QThread>
 #include <functional>
+#include <QDebug>
 
 class Client;
 class ClientWorker;
@@ -36,7 +37,12 @@ public:
   ~ClientAsyncWrapper();
   void wait_for_game_start_async(GameStartedCallback f);
   void receive_request_async(RequestReceivedCallback f);
-  template<class R> void send_request(const R& request) { worker_->send_request(request); }
+  template<class R> void send_request(const R& request) { 
+    qDebug() << "send"; 
+    try { worker_->send_request(request); }
+    catch (std::exception& e) { qDebug() << e.what(); return; }
+    qDebug() << "suc";
+  }
 };
 
 class ClientWorker : public QObject
@@ -54,7 +60,7 @@ public slots:
 public:
   ClientWorker();
   ~ClientWorker();
-  template<class R> void send_request(const R& request) { client_->send_request(request); }
+  template<class R> void send_request(const R& request) { qDebug() << "worker send"; client_->send_request(request); }
 };
 
 class Client
