@@ -76,10 +76,8 @@ SOCKET Client::init_socket()
     WSACleanup();
     return INVALID_SOCKET;
   }
-
   return sClient;
 }
-
 
 bool Client::wait_for_game_start()
 {
@@ -108,14 +106,14 @@ bool Client::wait_for_game_start()
   return reinterpret_cast<StartGameRequest*>(request)->is_offen_;
 }
 
-Request& Client::receive_request()
+Request* Client::receive_request()
 {
   memset(request_buffer_, 0, MAX_REQUEST_SIZE);
   recv(sClient_, request_buffer_, MAX_REQUEST_SIZE, 0);
-  return *reinterpret_cast<Request*>(request_buffer_);
+  return reinterpret_cast<Request* const>(request_buffer_);
 }
 
-ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) { qDebug() << "worker ready!"; }
+ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) {}
 
 ClientWorker::~ClientWorker() {}
 
@@ -127,19 +125,20 @@ void ClientWorker::wait_for_game_start()
 
 void ClientWorker::receive_request()
 {
-  const Request& request = client_->receive_request();
+  /* TODO: for some unknown reason, a sent request must be received twice.*/
+  client_->receive_request(); 
+  Request* request = client_->receive_request();
   emit request_received(request);
 }
 
 ClientAsyncWrapper::ClientAsyncWrapper() : worker_(new ClientWorker())
 {
-  qDebug() << "Client Ready!";
   worker_->moveToThread(&thread_);
 
   connect(this, SIGNAL(wait_for_game_start()), worker_, SLOT(wait_for_game_start()));
   connect(this, SIGNAL(receive_request()), worker_, SLOT(receive_request()));
   connect(worker_, SIGNAL(game_started(const bool&)), this, SLOT(exec_game_started_callback(const bool&)));
-  connect(worker_, SIGNAL(request_received(const Request&)), this, SLOT(exec_request_received_callback(const Request&)));
+  connect(worker_, SIGNAL(request_received(Request*)), this, SLOT(exec_request_received_callback(Request*)));
   
   connect(&thread_, SIGNAL(finished()), worker_, SLOT(deleteLater()));
   thread_.start();

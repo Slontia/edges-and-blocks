@@ -134,28 +134,28 @@ ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, 
 void ClientGUINetwork::receive_and_process_request_async()
 {
   set_act_enable(false);
-  client_->receive_request_async([&](const Request& request)
+  client_->receive_request_async([&](Request* const request)
   {
-    if (request.type_ == MOVE_REQUEST)
+    if (request->type_ == MOVE_REQUEST)
     {
-      const MoveRequest& move_request = reinterpret_cast<const MoveRequest&>(request);
+      const MoveRequest& move_request = *reinterpret_cast<MoveRequest* const>(request);
 
       impl_game_variety(
         game_->Move(move_request.old_edge_type_, move_request.old_pos_,
         move_request.new_edge_type_, move_request.new_pos_,
         turning_switcher_->get_turn()));
     }
-    else if (request.type_ == PLACE_REQUEST)
+    else if (request->type_ == PLACE_REQUEST)
     {
-      const PlaceRequest& place_request = reinterpret_cast<const PlaceRequest&>(request);
+      const PlaceRequest& place_request = *reinterpret_cast<PlaceRequest* const>(request);
       impl_game_variety(
         game_->Place(place_request.edge_type_, place_request.pos_, turning_switcher_->get_turn()));
     }
-    else if (request.type_ == PASS_REQUEST)
+    else if (request->type_ == PASS_REQUEST)
     {
       game_->Pass();
     }
-    else if (request.type_ == RETRACT_REQUEST)
+    else if (request->type_ == RETRACT_REQUEST)
     {
       /* TODO: handle retract */
     }

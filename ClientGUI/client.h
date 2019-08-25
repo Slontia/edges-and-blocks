@@ -19,7 +19,7 @@ class ClientAsyncWrapper : public QObject
   Q_OBJECT
 
 public:
-  typedef std::function<void(const Request&)> RequestReceivedCallback;
+  typedef std::function<void(Request* const)> RequestReceivedCallback;
   typedef std::function<void(const bool&)> GameStartedCallback;
 private:
   ClientWorker* worker_;
@@ -31,18 +31,13 @@ signals:
   void receive_request();
 private slots:
   void exec_game_started_callback(const bool& is_offen) { game_started_f(is_offen); }
-  void exec_request_received_callback(const Request& request) { req_recv_f(request); }
+  void exec_request_received_callback(Request* request) { req_recv_f(request); }
 public:
   ClientAsyncWrapper();
   ~ClientAsyncWrapper();
   void wait_for_game_start_async(GameStartedCallback f);
   void receive_request_async(RequestReceivedCallback f);
-  template<class R> void send_request(const R& request) { 
-    qDebug() << "send"; 
-    try { worker_->send_request(request); }
-    catch (std::exception& e) { qDebug() << e.what(); return; }
-    qDebug() << "suc";
-  }
+  template<class R> void send_request(const R& request) { worker_->send_request(request); }
 };
 
 class ClientWorker : public QObject
@@ -53,14 +48,14 @@ private:
   std::unique_ptr<Client> client_;
 signals:
   void game_started(const bool& is_offen);
-  void request_received(const Request&);
+  void request_received(Request*);
 public slots:
   void wait_for_game_start();
   void receive_request();
 public:
   ClientWorker();
   ~ClientWorker();
-  template<class R> void send_request(const R& request) { qDebug() << "worker send"; client_->send_request(request); }
+  template<class R> void send_request(const R& request) { client_->send_request(request); }
 };
 
 class Client
@@ -78,7 +73,7 @@ private:
 
 public:
   bool wait_for_game_start();
-  Request& receive_request();
+  Request* receive_request();
   template<class R> void send_request(const R& request) { ::send_request(request, sClient_); }
   bool is_offen();
 };
