@@ -139,7 +139,6 @@ void ClientGUINetwork::receive_and_process_request_async()
     if (request->type_ == MOVE_REQUEST)
     {
       const MoveRequest& move_request = *reinterpret_cast<MoveRequest* const>(request);
-
       impl_game_variety(
         game_->Move(move_request.old_edge_type_, move_request.old_pos_,
         move_request.new_edge_type_, move_request.new_pos_,
@@ -157,7 +156,27 @@ void ClientGUINetwork::receive_and_process_request_async()
     }
     else if (request->type_ == RETRACT_REQUEST)
     {
-      /* TODO: handle retract */
+      const bool& agree = QMessageBox::Yes == QMessageBox::question(this, "Retract", "Your opponent request for regret. Agree?");
+      if (agree)
+      {
+        reset_game_variety(game_->Retract());
+        reset_game_variety(game_->Retract());
+      }
+      client_->send_request(RetractAckRequest(agree));
+      return; /* Avoid switch player. */
+    }
+    else if (request->type_ == RETRACT_ACK_REQUEST)
+    {
+      if (reinterpret_cast<RetractAckRequest* const>(request)->ack_)
+      {
+        /* Retract twice for each player's action. */
+        reset_game_variety(game_->Retract());
+        reset_game_variety(game_->Retract());
+      }
+      else
+      {
+        notification_->setText("Opponent refused.");
+      }
     }
     else
     {
@@ -190,8 +209,9 @@ void ClientGUINetwork::PassButtonEvent()
   client_->send_request(PassRequest());
   receive_and_process_request_async();
 }
+
 void ClientGUINetwork::RetractButtonEvent()
 {
-  /* TODO: send retract request */
+  client_->send_request(RetractRequest());
   receive_and_process_request_async();
 }

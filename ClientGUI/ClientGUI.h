@@ -39,8 +39,10 @@ protected:
   std::unique_ptr<MovingSelectManager> select_manager_;
   std::unique_ptr<Game> game_;
   TurningSwitcher* turning_switcher_;
+  QTextEdit* notification_;
   virtual bool try_act(const EdgeButton* target_edge);
   void impl_game_variety(const GameVariety& game_var);
+  void reset_game_variety(const GameVariety& game_var);
   void set_act_enable(bool enable);
 
 private:
@@ -52,11 +54,9 @@ private:
   const QPoint kFunctionsLocation = QPoint(600, 270);
   const QPoint kNotificationLocation = QPoint(600, 400);
   Ui::ClientGUIClass ui;
-  QTextEdit* notification_;
   GameInfo* game_info_;
   GameFunctions* functions_;
   BoardWidget* board_;
-  void reset_game_variety(const GameVariety& game_var);
 };
 
 class ClientGUINetwork : public ClientGUI
