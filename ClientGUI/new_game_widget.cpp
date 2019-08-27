@@ -3,25 +3,29 @@
 #include <iostream>
 #include "client.h"
 #include <QDebug>
+#include <QMessageBox>
+#include <cassert>
 
-NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nullptr)
+NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nullptr),
+    local_game_(new QPushButton("Local Game", this)), network_game_(new QPushButton("Network Game", this))
 {
   setFixedSize(200, 100);
-  QPushButton *local_game = new QPushButton("Local Game", this);
-  QObject::connect(local_game, SIGNAL(clicked()), this, SLOT(open_client_gui_local()));
-  QPushButton *network_game = new QPushButton("Network Game", this);
-  QObject::connect(network_game, SIGNAL(clicked()), this, SLOT(open_client_gui_network()));
-  network_game->move(0, 30);
+  QObject::connect(local_game_, SIGNAL(clicked()), this, SLOT(open_client_gui_local()));
+  QObject::connect(network_game_, SIGNAL(clicked()), this, SLOT(wait_for_open_client_gui_network()));
+  network_game_->move(0, 30);
 }
 
 void NewGameWidget::open_client_gui_local()
 {
   open_client_gui(std::make_shared<ClientGUI>());
 }
-void NewGameWidget::open_client_gui_network()
+
+void NewGameWidget::wait_for_open_client_gui_network()
 {
+  network_forbidden_new_game();
   try
   {
+    assert(client_ == nullptr);
     client_ = std::make_unique<ClientAsyncWrapper>();
     client_->wait_for_game_start_async([&](bool is_offen)
     {
@@ -32,8 +36,16 @@ void NewGameWidget::open_client_gui_network()
   }
   catch (std::exception& e)
   {
-    std::cout << e.what() << std::endl;
+    network_allow_new_game();
+    QMessageBox::critical(this, "Error", (QString) "Cannot connect to server.\nInfo: " + e.what());
   }
+}
+
+void NewGameWidget::cancel_client_gui_network()
+{
+  // TODO: send signal to client_, cancel socket
+  client_ = nullptr;
+  network_allow_new_game();
 }
 
 void NewGameWidget::open_client_gui(std::shared_ptr<ClientGUI>& client_gui)
@@ -45,4 +57,20 @@ void NewGameWidget::open_client_gui(std::shared_ptr<ClientGUI>& client_gui)
   client_gui_ = std::move(client_gui);
   client_gui_->show();
   hide();
+}
+
+void NewGameWidget::network_forbidden_new_game()
+{
+  network_game_->disconnect();
+  QObject::connect(network_game_, SIGNAL(clicked()), this, SLOT(cancel_client_gui_network()));
+  local_game_->setEnabled(false);
+  network_game_->setText("Cancel");
+}
+
+void NewGameWidget::network_allow_new_game()
+{
+  network_game_->disconnect();
+  QObject::connect(network_game_, SIGNAL(clicked()), this, SLOT(wait_for_open_client_gui_network()));
+  local_game_->setEnabled(true);
+  network_game_->setText("Network Game");
 }

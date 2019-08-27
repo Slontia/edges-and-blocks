@@ -20,14 +20,7 @@ Client::Client() : sClient_(init_socket())
   }
 }
 
-Client::~Client()
-{
-  if (sClient_ != INVALID_SOCKET)
-  {
-    closesocket(sClient_);
-  }
-  WSACleanup();
-}
+Client::~Client() {}
 
 SOCKET Client::init_socket()
 {
@@ -113,14 +106,31 @@ Request* Client::receive_request()
   return reinterpret_cast<Request* const>(request_buffer_);
 }
 
+void Client::close_socket()
+{
+  if (sClient_ != INVALID_SOCKET)
+  {
+    closesocket(sClient_);
+    sClient_ = INVALID_SOCKET;
+  }
+  WSACleanup();
+}
+
 ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) {}
 
 ClientWorker::~ClientWorker() {}
 
 void ClientWorker::wait_for_game_start()
 {
-  const bool& is_offen = client_->wait_for_game_start();
-  emit game_started(is_offen);
+  try
+  {
+    const bool& is_offen = client_->wait_for_game_start();
+    emit game_started(is_offen);
+  } 
+  catch (const std::exception& e)
+  {
+    std::cout << e.what() << std::endl;
+  }
 }
 
 void ClientWorker::receive_request()
@@ -131,6 +141,8 @@ void ClientWorker::receive_request()
   emit request_received(request);
 }
 
+void ClientWorker::close_socket() { client_->close_socket(); }
+
 ClientAsyncWrapper::ClientAsyncWrapper() : worker_(new ClientWorker())
 {
   worker_->moveToThread(&thread_);
@@ -140,14 +152,16 @@ ClientAsyncWrapper::ClientAsyncWrapper() : worker_(new ClientWorker())
   connect(worker_, SIGNAL(game_started(const bool&)), this, SLOT(exec_game_started_callback(const bool&)));
   connect(worker_, SIGNAL(request_received(Request*)), this, SLOT(exec_request_received_callback(Request*)));
   
-  connect(&thread_, SIGNAL(finished()), worker_, SLOT(deleteLater()));
+  //connect(&thread_, SIGNAL(finished()), worker_, SLOT(deleteLater()));
   thread_.start();
 }
 
 ClientAsyncWrapper::~ClientAsyncWrapper()
 {
+  worker_->close_socket();
   thread_.quit();
   thread_.wait();
+  delete worker_;
 }
 
 /* Does NOT thread safe. */

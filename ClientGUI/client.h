@@ -56,6 +56,7 @@ public:
   ClientWorker();
   ~ClientWorker();
   template<class R> void send_request(const R& request) { client_->send_request(request); }
+  void close_socket();
 };
 
 class Client
@@ -75,6 +76,6 @@ public:
   bool wait_for_game_start();
   Request* receive_request();
   template<class R> void send_request(const R& request) { ::send_request(request, sClient_); }
-  bool is_offen();
+  void close_socket();
 };
 
