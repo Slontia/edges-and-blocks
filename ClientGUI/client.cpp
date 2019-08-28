@@ -101,8 +101,10 @@ bool Client::wait_for_game_start()
 
 Request* Client::receive_request()
 {
+  std::cout << "Receiving...";
   memset(request_buffer_, 0, MAX_REQUEST_SIZE);
   recv(sClient_, request_buffer_, MAX_REQUEST_SIZE, 0);
+  std::cout << "Received" << std::endl;
   return reinterpret_cast<Request* const>(request_buffer_);
 }
 

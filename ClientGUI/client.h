@@ -55,7 +55,7 @@ public slots:
 public:
   ClientWorker();
   ~ClientWorker();
-  template<class R> void send_request(const R& request) { client_->send_request(request); }
+  template<class R> void send_request(const R& request) { qDebug() << "Send"; client_->send_request(request); }
   void close_socket();
 };
 

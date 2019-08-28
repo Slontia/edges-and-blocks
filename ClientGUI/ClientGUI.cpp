@@ -163,6 +163,8 @@ void ClientGUINetwork::receive_and_process_request_async()
         reset_game_variety(game_->Retract());
       }
       client_->send_request(RetractAckRequest(agree));
+      turning_switcher_->switch_turn();
+      receive_and_process_request_async();
       return; /* Avoid switch player. */
     }
     else if (request->type_ == RETRACT_ACK_REQUEST)
@@ -172,6 +174,7 @@ void ClientGUINetwork::receive_and_process_request_async()
         /* Retract twice for each player's action. */
         reset_game_variety(game_->Retract());
         reset_game_variety(game_->Retract());
+        notification_->setText("Opponent agreed.");
       }
       else
       {
@@ -213,5 +216,6 @@ void ClientGUINetwork::PassButtonEvent()
 void ClientGUINetwork::RetractButtonEvent()
 {
   client_->send_request(RetractRequest());
+  notification_->setText("Waiting for response...");
   receive_and_process_request_async();
 }
