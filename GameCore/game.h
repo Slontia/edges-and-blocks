@@ -21,6 +21,7 @@ public:
   GameVariety Move(const AreaType& old_edge_type, const Coordinate& old_pos, const AreaType& new_edge_type, const Coordinate& new_pos, const PlayerType& p);
   GameVariety Retract();
   void Pass();
+  int get_round();
   const std::array<int, kPlayerTypeCount - 1>& get_edge_own_counts() const { return edge_own_counts_; }
   const std::optional<PlayerType>& get_winner() const { return winner_; }
   const Board& get_board() const { return board_; }

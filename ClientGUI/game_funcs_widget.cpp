@@ -7,11 +7,11 @@ GameFunctions::GameFunctions(QWidget* parent, const QPoint& location) : QWidget(
     btn = new QPushButton(text, this);
     btn->resize(100, 30);
     btn->move(QPoint(0, 40 * index));
-    btn->setEnabled(true);
     QObject::connect(btn, SIGNAL(clicked()), parent, handle);
   };
   init_btn(pass_, "PASS", 0, SLOT(PassButtonEvent()));
   init_btn(retract_, "RETRACT", 1, SLOT(RetractButtonEvent()));
+  retract_->setEnabled(false); /* players cannot retract at first */
   move(location);
   resize(100, 300);
 }

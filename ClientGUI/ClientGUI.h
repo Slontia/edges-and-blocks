@@ -40,10 +40,11 @@ protected:
   std::unique_ptr<Game> game_;
   TurningSwitcher* turning_switcher_;
   QTextEdit* notification_;
+  GameFunctions* functions_;
+  BoardWidget* board_;
   virtual bool try_act(const EdgeButton* target_edge);
   void impl_game_variety(const GameVariety& game_var);
   void reset_game_variety(const GameVariety& game_var);
-  void set_act_enable(bool enable);
 
 private:
   QPushButton* pass_;
@@ -55,8 +56,6 @@ private:
   const QPoint kNotificationLocation = QPoint(600, 400);
   Ui::ClientGUIClass ui;
   GameInfo* game_info_;
-  GameFunctions* functions_;
-  BoardWidget* board_;
 };
 
 class ClientGUINetwork : public ClientGUI
@@ -75,5 +74,6 @@ protected:
 
 private:
   std::unique_ptr<ClientAsyncWrapper> client_;
+  void set_act_enable(bool enable);
   void receive_and_process_request_async();
 };

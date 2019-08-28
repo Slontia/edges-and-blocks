@@ -71,6 +71,7 @@ bool ClientGUI::try_act(const EdgeButton* target_edge)
     notification_->setText(e.what());
     return false;
   }
+  functions_->retract_->setEnabled(true);
   turning_switcher_->switch_turn();
   return true;
 }
@@ -80,6 +81,7 @@ void ClientGUI::PassButtonEvent()
   notification_->clear();
   game_->Pass();
   select_manager_->clear_edge();
+  functions_->retract_->setEnabled(true);
   turning_switcher_->switch_turn();
 }
 
@@ -90,6 +92,7 @@ void ClientGUI::RetractButtonEvent()
   {
     GameVariety game_var = game_->Retract();
     reset_game_variety(game_var);
+    if (game_->get_round() == 0) { functions_->retract_->setEnabled(false); }
     turning_switcher_->switch_turn();
   }
   catch (const game_exception& e)
@@ -117,18 +120,18 @@ void ClientGUI::show_new_game_widget()
   (static_cast<NewGameWidget*>(parentWidget()))->show();
 }
 
-void ClientGUI::set_act_enable(bool enable)
-{
-  board_->set_enable(enable);
-  functions_->set_enable(enable);
-}
-
 ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
 {
   if (!is_offen)
   {
     receive_and_process_request_async();
   }
+}
+
+void ClientGUINetwork::set_act_enable(bool enable)
+{
+  board_->set_enable(enable);
+  functions_->set_enable(enable);
 }
 
 void ClientGUINetwork::receive_and_process_request_async()
@@ -187,6 +190,8 @@ void ClientGUINetwork::receive_and_process_request_async()
     }
     turning_switcher_->switch_turn();
     set_act_enable(true);
+    /* If player has no edges on board, forbidden retract. */
+    if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }
   });
 }
 
