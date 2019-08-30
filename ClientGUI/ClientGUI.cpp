@@ -73,6 +73,7 @@ bool ClientGUI::try_act(const EdgeButton* target_edge)
   }
   functions_->retract_->setEnabled(true);
   turning_switcher_->switch_turn();
+  judge_over();
   return true;
 }
 
@@ -83,6 +84,7 @@ void ClientGUI::PassButtonEvent()
   select_manager_->clear_edge();
   functions_->retract_->setEnabled(true);
   turning_switcher_->switch_turn();
+  judge_over();
 }
 
 void ClientGUI::RetractButtonEvent()
@@ -120,18 +122,28 @@ void ClientGUI::show_new_game_widget()
   (static_cast<NewGameWidget*>(parentWidget()))->show();
 }
 
+void ClientGUI::set_act_enable(bool enable)
+{
+  board_->set_enable(enable);
+  functions_->set_enable(enable);
+}
+
+void ClientGUI::judge_over()
+{
+  if (game_->is_over())
+  {
+    set_act_enable(false);
+    /* In local game, we support retract after an over game. */
+    functions_->retract_->setEnabled(true);
+  }
+}
+
 ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
 {
   if (!is_offen)
   {
     receive_and_process_request_async();
   }
-}
-
-void ClientGUINetwork::set_act_enable(bool enable)
-{
-  board_->set_enable(enable);
-  functions_->set_enable(enable);
 }
 
 void ClientGUINetwork::receive_and_process_request_async()
@@ -190,6 +202,7 @@ void ClientGUINetwork::receive_and_process_request_async()
     }
     turning_switcher_->switch_turn();
     set_act_enable(true);
+    judge_over();
     /* If player has no edges on board, forbidden retract. */
     if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }
   });
@@ -223,4 +236,12 @@ void ClientGUINetwork::RetractButtonEvent()
   client_->send_request(RetractRequest());
   notification_->setText("Waiting for response...");
   receive_and_process_request_async();
+}
+
+void ClientGUINetwork::judge_over()
+{
+  if (game_->is_over())
+  {
+    set_act_enable(false);
+  }
 }

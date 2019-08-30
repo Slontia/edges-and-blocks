@@ -78,10 +78,9 @@ GameVariety Game::Retract()
   return game_var;
 }
 
-int Game::get_round()
-{
-  return varieties_.size();
-}
+int Game::get_round() { return varieties_.size(); }
+
+bool Game::is_over() { return winner_.has_value(); }
 
 GameVariety Game::change_and_refresh(std::function<void(GameVariety&)> change_func, EdgeArea& refresh_edge, const PlayerType& p)
 {

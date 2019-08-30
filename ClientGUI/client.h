@@ -33,7 +33,7 @@ private slots:
   void exec_game_started_callback(const bool& is_offen) { game_started_f(is_offen); }
   void exec_request_received_callback(Request* request) { req_recv_f(request); }
 public:
-  ClientAsyncWrapper();
+  ClientAsyncWrapper(const std::string& ip, const int& port);
   ~ClientAsyncWrapper();
   void wait_for_game_start_async(GameStartedCallback f);
   void receive_request_async(RequestReceivedCallback f);
@@ -53,7 +53,7 @@ public slots:
   void wait_for_game_start();
   void receive_request();
 public:
-  ClientWorker();
+  ClientWorker(const std::string& ip, const int& port);
   ~ClientWorker();
   template<class R> void send_request(const R& request) { qDebug() << "Send"; client_->send_request(request); }
   void close_socket();
@@ -66,11 +66,11 @@ private:
   char request_buffer_[MAX_REQUEST_SIZE];
 
 public:
-  Client();
+  Client(const std::string& ip, const int& port);
   ~Client();
 
 private:
-  SOCKET init_socket();
+  SOCKET init_socket(const std::string& ip, const int& port);
 
 public:
   bool wait_for_game_start();

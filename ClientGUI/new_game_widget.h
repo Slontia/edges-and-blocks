@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <QMainWindow>
 #include <QPushButton>
+#include <QLineEdit>
 #include <memory>
 #include "client.h"
 
@@ -25,6 +26,8 @@ private:
   std::shared_ptr<ClientGUI> client_gui_ = nullptr;
   QPushButton* local_game_;
   QPushButton* network_game_;
+  QLineEdit* ip_edit_;
+  QLineEdit* port_edit_;
   void open_client_gui(std::shared_ptr<ClientGUI>& client_gui);
   void network_forbidden_new_game();
   void network_allow_new_game();

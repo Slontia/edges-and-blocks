@@ -43,8 +43,10 @@ protected:
   GameFunctions* functions_;
   BoardWidget* board_;
   virtual bool try_act(const EdgeButton* target_edge);
+  virtual void judge_over();
   void impl_game_variety(const GameVariety& game_var);
   void reset_game_variety(const GameVariety& game_var);
+  void set_act_enable(bool enable);
 
 private:
   QPushButton* pass_;
@@ -74,6 +76,6 @@ protected:
 
 private:
   std::unique_ptr<ClientAsyncWrapper> client_;
-  void set_act_enable(bool enable);
   void receive_and_process_request_async();
+  virtual void judge_over();
 };

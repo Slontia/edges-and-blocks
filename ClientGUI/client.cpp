@@ -12,7 +12,7 @@
 #include <QDebug>
 #pragma comment(lib, "ws2_32.lib")
 
-Client::Client() : sClient_(init_socket())
+Client::Client(const std::string& ip, const int& port) : sClient_(init_socket(ip, port))
 {
   if (sClient_ == INVALID_SOCKET)
   {
@@ -22,7 +22,7 @@ Client::Client() : sClient_(init_socket())
 
 Client::~Client() {}
 
-SOCKET Client::init_socket()
+SOCKET Client::init_socket(const std::string& ip, const int& port)
 {
   WORD wVersionRequested;
   WSADATA wsaData;
@@ -57,8 +57,8 @@ SOCKET Client::init_socket()
 
   //构建服务器地址信息
   saServer.sin_family = AF_INET; //地址家族
-  saServer.sin_port = htons(SERVER_PORT); //注意转化为网络节序
-  saServer.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+  saServer.sin_port = htons(port); //注意转化为网络节序
+  saServer.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
 
   //连接服务器
   ret = connect(sClient, (struct sockaddr *)&saServer, sizeof(saServer));
@@ -118,7 +118,7 @@ void Client::close_socket()
   WSACleanup();
 }
 
-ClientWorker::ClientWorker() : client_(std::make_unique<Client>()) {}
+ClientWorker::ClientWorker(const std::string& ip, const int& port) : client_(std::make_unique<Client>(ip, port)) {}
 
 ClientWorker::~ClientWorker() {}
 
@@ -145,7 +145,7 @@ void ClientWorker::receive_request()
 
 void ClientWorker::close_socket() { client_->close_socket(); }
 
-ClientAsyncWrapper::ClientAsyncWrapper() : worker_(new ClientWorker())
+ClientAsyncWrapper::ClientAsyncWrapper(const std::string& ip, const int& port) : worker_(new ClientWorker(ip, port))
 {
   worker_->moveToThread(&thread_);
 
