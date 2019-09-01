@@ -74,36 +74,25 @@ SOCKET Client::init_socket(const std::string& ip, const int& port)
 
 bool Client::wait_for_game_start()
 {
-  char request_buffer[MAX_REQUEST_SIZE];
-  Request *request = nullptr;
   while (true)
   {
-    if (!SOCKET_ACT_OK(recv(sClient_, request_buffer, MAX_REQUEST_SIZE, 0)))
-    {
-      throw std::exception("Server closed.");
-    }
-    request = reinterpret_cast<Request*>(request_buffer);
-    if (request->type_ == HEARTBEAT_REQUEST)
-    {
-      send_heartbeat(sClient_);
-    }
-    else
-    {
-      break;
-    }
+    char request_buffer[MAX_REQUEST_SIZE];
+    if (!SOCKET_ACT_OK(recv(sClient_, request_buffer, MAX_REQUEST_SIZE, 0))) { throw std::exception("Server closed."); }
+    Request *request = reinterpret_cast<Request*>(request_buffer);
+    if (request->type_ == HEARTBEAT_REQUEST) { send_heartbeat(sClient_); }
+    else if (request->type_ != START_GAME_REQUEST) { throw std::exception("Unexpected request from server before game start."); }
+    else { return reinterpret_cast<StartGameRequest*>(request)->is_offen_; }
   }
-  if (request->type_ != START_GAME_REQUEST)
-  {
-    throw std::exception("Unexpected request from server before game start.");
-  }
-  return reinterpret_cast<StartGameRequest*>(request)->is_offen_;
 }
 
 Request* Client::receive_request()
 {
   std::cout << "Receiving...";
   memset(request_buffer_, 0, MAX_REQUEST_SIZE);
-  recv(sClient_, request_buffer_, MAX_REQUEST_SIZE, 0);
+  if (!SOCKET_ACT_OK(recv(sClient_, request_buffer_, MAX_REQUEST_SIZE, 0)))
+  {
+    throw std::exception("Receive request failed."); 
+  }
   std::cout << "Received" << std::endl;
   return reinterpret_cast<Request* const>(request_buffer_);
 }
@@ -138,8 +127,13 @@ void ClientWorker::wait_for_game_start()
 void ClientWorker::receive_request()
 {
   /* TODO: for some unknown reason, a sent request must be received twice.*/
-  client_->receive_request(); 
-  Request* request = client_->receive_request();
+  Request* request = nullptr;
+  try
+  {
+    client_->receive_request();
+    request = client_->receive_request();
+  }
+  catch (...) {}
   emit request_received(request);
 }
 

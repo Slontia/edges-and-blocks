@@ -8,8 +8,6 @@
 #define MAX_REQUEST_SIZE 1024
 #define SOCKET_ACT_OK(ret /* int */) ((ret) != SOCKET_ERROR && (ret) != 0)
 
-#define SERVER_PORT 5209 //ÕìÌý¶Ë¿Ú
-
 typedef enum
 {
   READY_REQUEST,

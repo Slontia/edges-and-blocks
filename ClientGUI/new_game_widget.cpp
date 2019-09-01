@@ -7,6 +7,10 @@
 #include <cassert>
 #include <QLineEdit>
 #include <QLabel>
+#include <QString>
+
+static const QString kDefaultIP = "127.0.0.1";
+static const QString kDefaultPort = "9810";
 
 NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nullptr), 
   local_game_(new QPushButton("Local Game", this)), 
@@ -28,13 +32,13 @@ NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nul
   QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
   QRegExp ipRegex("^" + ipRange + "\\." + ipRange + "\\." + ipRange + "\\." + ipRange + "$");
   ip_edit_->setValidator(new QRegExpValidator(ipRegex, ip_edit_));
-  ip_edit_->setPlaceholderText("114.51.41.91");
+  ip_edit_->setPlaceholderText(kDefaultIP);
   ip_edit_->move(100, 45);
   ip_edit_->setFixedSize(110, 20);
 
   (new QLabel("Port:", this))->move(20, 65);
   port_edit_->setValidator(new QIntValidator(port_edit_));
-  port_edit_->setPlaceholderText("9810");
+  port_edit_->setPlaceholderText(kDefaultPort);
   port_edit_->move(100, 70);
   port_edit_->setFixedSize(40, 20);
   port_edit_->setMaxLength(5);
@@ -51,7 +55,9 @@ void NewGameWidget::wait_for_open_client_gui_network()
   try
   {
     assert(client_ == nullptr);
-    client_ = std::make_unique<ClientAsyncWrapper>(ip_edit_->text().toStdString(), port_edit_->text().toInt());
+    client_ = std::make_unique<ClientAsyncWrapper>(
+      ip_edit_->text().isEmpty() ? kDefaultIP.toStdString() : ip_edit_->text().toStdString(), 
+      port_edit_->text().isEmpty() ? kDefaultPort.toInt() : port_edit_->text().toInt());
     client_->wait_for_game_start_async([&](bool is_offen)
     {
       /* We use shared_ptr instead of unique_ptr to support polymorphic. */
@@ -62,7 +68,7 @@ void NewGameWidget::wait_for_open_client_gui_network()
   catch (std::exception& e)
   {
     network_allow_new_game();
-    QMessageBox::critical(this, "Error", (QString) "Cannot connect to server.\nInfo: " + e.what());
+    QMessageBox::critical(this, "Error", (QString) "Cannot connect to server. Error: " + e.what());
   }
 }
 
