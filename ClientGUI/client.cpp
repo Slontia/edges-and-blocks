@@ -12,7 +12,7 @@
 #include <QDebug>
 #pragma comment(lib, "ws2_32.lib")
 
-Client::Client(const std::string& ip, const int& port) : sClient_(init_socket(ip, port))
+Client::Client(const std::string& ip, const int& port) : sClient_(init_socket(ip, port)), source_(UNKNOWN_SOURCE)
 {
   if (sClient_ == INVALID_SOCKET)
   {
@@ -76,25 +76,25 @@ bool Client::wait_for_game_start()
 {
   while (true)
   {
-    char request_buffer[MAX_REQUEST_SIZE];
-    if (!SOCKET_ACT_OK(recv(sClient_, request_buffer, MAX_REQUEST_SIZE, 0))) { throw std::exception("Server closed."); }
-    Request *request = reinterpret_cast<Request*>(request_buffer);
-    if (request->type_ == HEARTBEAT_REQUEST) { send_heartbeat(sClient_); }
+    std::cout << "1";
+    Request *request = receive_request();
+#ifdef TWICE
+    request = receive_request();
+#endif
+    if (request->type_ == HEARTBEAT_REQUEST) { send_heartbeat(sClient_, source_); }
     else if (request->type_ != START_GAME_REQUEST) { throw std::exception("Unexpected request from server before game start."); }
-    else { return reinterpret_cast<StartGameRequest*>(request)->is_offen_; }
+    else
+    {
+      bool is_offen = reinterpret_cast<StartGameRequest*>(request)->is_offen_;
+      source_ = is_offen ? OFFEN_PLAYER_SOURCE : DEFEN_PLAYER_SOURCE;
+      return is_offen;
+    }
   }
 }
 
 Request* Client::receive_request()
 {
-  std::cout << "Receiving...";
-  memset(request_buffer_, 0, MAX_REQUEST_SIZE);
-  if (!SOCKET_ACT_OK(recv(sClient_, request_buffer_, MAX_REQUEST_SIZE, 0)))
-  {
-    throw std::exception("Receive request failed."); 
-  }
-  std::cout << "Received" << std::endl;
-  return reinterpret_cast<Request* const>(request_buffer_);
+  return ::receive_request(sClient_, request_buffer_).first;
 }
 
 void Client::close_socket()
@@ -128,11 +128,7 @@ void ClientWorker::receive_request()
 {
   /* TODO: for some unknown reason, a sent request must be received twice.*/
   Request* request = nullptr;
-  try
-  {
-    client_->receive_request();
-    request = client_->receive_request();
-  }
+  try { request = client_->receive_request(); }
   catch (...) {}
   emit request_received(request);
 }

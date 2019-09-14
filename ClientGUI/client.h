@@ -37,7 +37,7 @@ public:
   ~ClientAsyncWrapper();
   void wait_for_game_start_async(GameStartedCallback f);
   void receive_request_async(RequestReceivedCallback f);
-  template<class R> void send_request(const R& request) { worker_->send_request(request); }
+  template<class R> void send_request(R& request) { worker_->send_request(request); }
 };
 
 class ClientWorker : public QObject
@@ -55,7 +55,7 @@ public slots:
 public:
   ClientWorker(const std::string& ip, const int& port);
   ~ClientWorker();
-  template<class R> void send_request(const R& request) { qDebug() << "Send"; client_->send_request(request); }
+  template<class R> void send_request(R& request) { qDebug() << "Send"; client_->send_request(request); }
   void close_socket();
 };
 
@@ -64,6 +64,7 @@ class Client
 private:
   SOCKET sClient_;
   char request_buffer_[MAX_REQUEST_SIZE];
+  SourceType source_;
 
 public:
   Client(const std::string& ip, const int& port);
@@ -75,7 +76,11 @@ private:
 public:
   bool wait_for_game_start();
   Request* receive_request();
-  template<class R> void send_request(const R& request) { ::send_request(request, sClient_); }
+  template<class R> void send_request(R& request) 
+  {
+    request.source_ = source_;
+    ::send_request(request, sClient_); 
+  }
   void close_socket();
 };
 

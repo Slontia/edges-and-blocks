@@ -9,8 +9,13 @@
 #include <QLabel>
 #include <QString>
 
+#if 1
+static const QString kDefaultIP = "47.98.225.186";
+static const QString kDefaultPort = "15613";
+#else
 static const QString kDefaultIP = "127.0.0.1";
 static const QString kDefaultPort = "9810";
+#endif
 
 NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nullptr), 
   local_game_(new QPushButton("Local Game", this)), 

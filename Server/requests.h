@@ -4,13 +4,16 @@
 //#include <winsock2.h>
 #include <type_traits>
 #include <memory>
+#include <iostream>
 
 #define MAX_REQUEST_SIZE 1024
 #define SOCKET_ACT_OK(ret /* int */) ((ret) != SOCKET_ERROR && (ret) != 0)
 
+#define TWIC
+
 typedef enum
 {
-  READY_REQUEST,
+  UNKNOWN_REQUEST,
   START_GAME_REQUEST,
   PLACE_REQUEST,
   MOVE_REQUEST,
@@ -22,29 +25,42 @@ typedef enum
   REQUEST_NUM
 } RequestType;
 
+typedef enum
+{
+  UNKNOWN_SOURCE,
+  SERVER_SOURCE,
+  OFFEN_PLAYER_SOURCE,
+  DEFEN_PLAYER_SOURCE,
+
+  SOURCE_NUM
+} SourceType;
+
 struct Request
 {
-  RequestType type_;
-  Request(const RequestType& type) : type_(type) {}
-};
-
-struct ReadyRequest : public Request
-{
-  ReadyRequest() : Request(READY_REQUEST) {}
+  const RequestType type_;
+  const size_t size_;
+  SourceType source_;
+  Request(const RequestType& type, size_t size, SourceType source) :
+    type_(type), size_(size), source_(source) {}
+  friend std::ostream& operator<<(std::ostream &strm, const Request& req)
+  {
+    return strm << "{ " << req.type_ << ", " << req.size_ << ", " << req.source_ << " }";
+  }
 };
 
 struct StartGameRequest : public Request
 {
   bool is_offen_;
-  StartGameRequest(bool is_offen) : is_offen_(is_offen), Request(START_GAME_REQUEST) {}
+  StartGameRequest(bool is_offen, SourceType source = UNKNOWN_SOURCE) :
+    is_offen_(is_offen), Request(START_GAME_REQUEST, sizeof(StartGameRequest), source) {}
 };
 
 struct PlaceRequest : public Request
 {
   AreaType edge_type_;
   Coordinate pos_;
-  PlaceRequest(const AreaType& edge_type, const Coordinate& pos) : 
-    Request(PLACE_REQUEST), edge_type_(edge_type), pos_(pos) {}
+  PlaceRequest(const AreaType& edge_type, const Coordinate& pos, SourceType source = UNKNOWN_SOURCE) :
+    Request(PLACE_REQUEST, sizeof(PlaceRequest), source), edge_type_(edge_type), pos_(pos) {}
 };
 
 struct MoveRequest : public Request
@@ -53,29 +69,29 @@ struct MoveRequest : public Request
   Coordinate old_pos_;
   AreaType new_edge_type_;
   Coordinate new_pos_;
-  MoveRequest(const AreaType old_edge_type, const Coordinate& old_pos, const AreaType& new_edge_type, const Coordinate& new_pos) : 
-    Request(MOVE_REQUEST), old_edge_type_(old_edge_type), old_pos_(old_pos), new_edge_type_(new_edge_type), new_pos_(new_pos) {}
+  MoveRequest(const AreaType old_edge_type, const Coordinate& old_pos, const AreaType& new_edge_type, const Coordinate& new_pos, SourceType source = UNKNOWN_SOURCE) :
+    Request(MOVE_REQUEST, sizeof(MoveRequest), source), old_edge_type_(old_edge_type), old_pos_(old_pos), new_edge_type_(new_edge_type), new_pos_(new_pos) {}
 };
 
 struct PassRequest : public Request
 {
-  PassRequest() : Request(PASS_REQUEST) {}
+  PassRequest(SourceType source = UNKNOWN_SOURCE) : Request(PASS_REQUEST, sizeof(PassRequest), source) {}
 };
 
 struct RetractRequest : public Request
 {
-  RetractRequest() : Request(RETRACT_REQUEST) {}
+  RetractRequest(SourceType source = UNKNOWN_SOURCE) : Request(RETRACT_REQUEST, sizeof(RetractRequest), source) {}
 };
 
 struct RetractAckRequest : public Request
 {
   bool ack_;
-  RetractAckRequest(bool ack) : Request(RETRACT_ACK_REQUEST), ack_(ack) {}
+  RetractAckRequest(bool ack, SourceType source = UNKNOWN_SOURCE) : Request(RETRACT_ACK_REQUEST, sizeof(RetractAckRequest), source), ack_(ack) {}
 };
 
 struct HeartbeatRequest : public Request
 {
-  HeartbeatRequest() : Request(HEARTBEAT_REQUEST) {}
+  HeartbeatRequest(SourceType source = UNKNOWN_SOURCE) : Request(HEARTBEAT_REQUEST, sizeof(HeartbeatRequest), source) {}
 };
 
 template <class R>
@@ -86,9 +102,20 @@ void send_request(const R& request, SOCKET& socket)
     throw std::exception("Send request failed.");
 }
 
-inline void send_heartbeat(SOCKET& socket)
+inline void send_heartbeat(SOCKET& socket, SourceType source)
 {
-  return send_request(HeartbeatRequest(), socket);
+  return send_request(HeartbeatRequest(source), socket);
 }
 
-
+inline const std::pair<Request*, int> receive_request(SOCKET& socket, char* buffer)
+{
+  std::cout << "Receiving...";
+  memset(buffer, 0, MAX_REQUEST_SIZE);
+  int ret = recv(socket, buffer, MAX_REQUEST_SIZE, 0);
+  if (!SOCKET_ACT_OK(ret))
+  {
+    throw std::exception("Receive request failed.");
+  }
+  std::cout << "size=" << ret << " type=" << reinterpret_cast<Request* const>(buffer)->type_ << "Received" << std::endl;
+  return std::pair<Request*, int>(reinterpret_cast<Request* const>(buffer), ret);
+}
