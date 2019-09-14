@@ -76,11 +76,7 @@ bool Client::wait_for_game_start()
 {
   while (true)
   {
-    std::cout << "1";
     Request *request = receive_request();
-#ifdef TWICE
-    request = receive_request();
-#endif
     if (request->type_ == HEARTBEAT_REQUEST) { send_heartbeat(sClient_, source_); }
     else if (request->type_ != START_GAME_REQUEST) { throw std::exception("Unexpected request from server before game start."); }
     else

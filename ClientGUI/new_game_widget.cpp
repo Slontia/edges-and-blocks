@@ -9,7 +9,7 @@
 #include <QLabel>
 #include <QString>
 
-#if 1
+#if 0
 static const QString kDefaultIP = "47.98.225.186";
 static const QString kDefaultPort = "15613";
 #else

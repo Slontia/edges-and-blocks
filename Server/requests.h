@@ -9,8 +9,6 @@
 #define MAX_REQUEST_SIZE 1024
 #define SOCKET_ACT_OK(ret /* int */) ((ret) != SOCKET_ERROR && (ret) != 0)
 
-#define TWIC
-
 typedef enum
 {
   UNKNOWN_REQUEST,
@@ -44,7 +42,7 @@ struct Request
     type_(type), size_(size), source_(source) {}
   friend std::ostream& operator<<(std::ostream &strm, const Request& req)
   {
-    return strm << "{ " << req.type_ << ", " << req.size_ << ", " << req.source_ << " }";
+    return strm << "{ type: " << req.type_ << ", size: " << req.size_ << ", source: " << req.source_ << " }";
   }
 };
 
@@ -98,8 +96,13 @@ template <class R>
 void send_request(const R& request, SOCKET& socket)
 {
   static_assert(std::is_base_of_v<Request, R>);
-  if (!SOCKET_ACT_OK(send(socket, reinterpret_cast<const char*>(&request), sizeof(request), 0)))
+  std::cout << "Sending...";
+  int ret = send(socket, reinterpret_cast<const char*>(&request), sizeof(request), 0);
+  if (!SOCKET_ACT_OK(ret))
+  {
     throw std::exception("Send request failed.");
+  }
+  std::cout << request << std::endl;
 }
 
 inline void send_heartbeat(SOCKET& socket, SourceType source)
@@ -116,6 +119,7 @@ inline const std::pair<Request*, int> receive_request(SOCKET& socket, char* buff
   {
     throw std::exception("Receive request failed.");
   }
-  std::cout << "size=" << ret << " type=" << reinterpret_cast<Request* const>(buffer)->type_ << "Received" << std::endl;
-  return std::pair<Request*, int>(reinterpret_cast<Request* const>(buffer), ret);
+  Request* request = reinterpret_cast<Request* const>(buffer);
+  std::cout << "[" << ret << "]" << *request << std::endl;
+  return std::pair<Request*, int>(request, ret);
 }
