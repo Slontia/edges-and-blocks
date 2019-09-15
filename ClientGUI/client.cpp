@@ -24,52 +24,34 @@ Client::~Client() {}
 
 SOCKET Client::init_socket(const std::string& ip, const int& port)
 {
-  WORD wVersionRequested;
-  WSADATA wsaData;
-  int ret;
-  SOCKET sClient; //连接套接字
-  struct sockaddr_in saServer; //地址信息
-  BOOL fSuccess = TRUE;
-
-  //WinSock初始化
-  wVersionRequested = MAKEWORD(2, 2); //希望使用的WinSock DLL的版本
-  if (WSAStartup(wVersionRequested, &wsaData) != 0)
+  try
   {
-    printf("WSAStartup() failed!\n");
+    WSADATA wsaData;
+    ::start_up_winsock(wsaData);
+    SOCKET sClient = ::create_socket_with_tcp();
+    connect_to_server(sClient, ip, port);
+    std::cout << "Client boot successful!" << std::endl;
+    return sClient;
+  }
+  catch (const std::exception& e)
+  {
+    std::cout << e.what() << std::endl;
     return INVALID_SOCKET;
   }
-  //确认WinSock DLL支持版本2.2
-  if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
-  {
-    WSACleanup();
-    printf("Invalid WinSock version!\n");
-    return INVALID_SOCKET;
-  }
+}
 
-  //创建Socket,使用TCP协议
-  sClient = socket(AF_INET, SOCK_STREAM, 0);
-  if (sClient == INVALID_SOCKET)
-  {
-    WSACleanup();
-    printf("socket() failed!\n");
-    return INVALID_SOCKET;
-  }
-
-  //构建服务器地址信息
-  saServer.sin_family = AF_INET; //地址家族
-  saServer.sin_port = htons(port); //注意转化为网络节序
+void Client::connect_to_server(SOCKET sClient, const std::string& ip, const int& port)
+{
+  struct sockaddr_in saServer;
+  saServer.sin_family = AF_INET;
+  saServer.sin_port = htons(port);
   saServer.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
-
-  //连接服务器
-  ret = connect(sClient, (struct sockaddr *)&saServer, sizeof(saServer));
-  if (ret == SOCKET_ERROR)
+  if (connect(sClient, (struct sockaddr *)&saServer, sizeof(saServer)) == SOCKET_ERROR)
   {
-    printf("connect() failed!\n");
-    closesocket(sClient); //关闭套接字
+    closesocket(sClient);
     WSACleanup();
-    return INVALID_SOCKET;
+    throw std::exception("connect() failed!");
   }
-  return sClient;
 }
 
 bool Client::wait_for_game_start()

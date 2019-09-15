@@ -1,10 +1,11 @@
 #pragma once
 
 #include "../GameCore/GameCore.h"
-//#include <winsock2.h>
+#include <winsock2.h>
 #include <type_traits>
 #include <memory>
 #include <iostream>
+//#pragma comment(lib, "ws2_32.lib")
 
 #define MAX_REQUEST_SIZE 1024
 #define SOCKET_ACT_OK(ret /* int */) ((ret) != SOCKET_ERROR && (ret) != 0)
@@ -122,4 +123,30 @@ inline const std::pair<Request*, int> receive_request(SOCKET& socket, char* buff
   Request* request = reinterpret_cast<Request* const>(buffer);
   std::cout << "[" << ret << "]" << *request << std::endl;
   return std::pair<Request*, int>(request, ret);
+}
+
+inline void start_up_winsock(WSADATA& wsaData)
+{
+  /* Use Winsock DLL v2.2 */
+  WORD wVersionRequested = MAKEWORD(2, 2);
+  if (WSAStartup(wVersionRequested, &wsaData) != 0)
+  {
+    throw std::exception("WSAStartup() failed!");
+  }
+  if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+  {
+    WSACleanup();
+    throw std::exception("Invalid WinSock version!");
+  }
+}
+
+inline SOCKET create_socket_with_tcp()
+{
+  SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
+  if (s == INVALID_SOCKET)
+  {
+    WSACleanup();
+    throw std::exception("socket() failed!");
+  }
+  return s;
 }

@@ -71,7 +71,8 @@ public:
   ~Client();
 
 private:
-  SOCKET init_socket(const std::string& ip, const int& port);
+  static SOCKET init_socket(const std::string& ip, const int& port);
+  static void connect_to_server(SOCKET sClient, const std::string& ip, const int& port);
 
 public:
   bool wait_for_game_start();

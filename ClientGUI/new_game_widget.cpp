@@ -1,17 +1,17 @@
 #include "new_game_widget.h"
 #include "ClientGUI.h"
-#include <iostream>
 #include "client.h"
+#include <iostream>
+#include <cassert>
 #include <QDebug>
 #include <QMessageBox>
-#include <cassert>
 #include <QLineEdit>
 #include <QLabel>
 #include <QString>
 
-#if 0
+#if 1
 static const QString kDefaultIP = "47.98.225.186";
-static const QString kDefaultPort = "15613";
+static const QString kDefaultPort = "52173";
 #else
 static const QString kDefaultIP = "127.0.0.1";
 static const QString kDefaultPort = "9810";
