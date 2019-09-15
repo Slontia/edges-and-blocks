@@ -21,16 +21,17 @@ ClientGUI::ClientGUI(QWidget *parent)
     functions_ = new GameFunctions(this, kFunctionsLocation);
     game_info_ = new GameInfo(this, kGameInfoLocation, *game_);
     board_ = new BoardWidget(this, kBoardLocation);
+    board_->set_hover_color(OFFEN_PLAYER);
 
     notification_ = new QTextEdit(this);
     notification_->move(kNotificationLocation);
     notification_->resize(160, 80);
     notification_->setEnabled(false);
 
-    QMenu *game_menu = menuBar()->addMenu(tr("Game"));
-    QAction *new_game_action = new QAction(tr("New Game"));
-    game_menu->addAction(new_game_action);
-    connect(new_game_action, SIGNAL(clicked()), this, SLOT(show_new_game_widget()));
+    //QMenu *game_menu = menuBar()->addMenu(tr("Game"));
+    //QAction *new_game_action = new QAction(tr("New Game"));
+    //game_menu->addAction(new_game_action);
+    //connect(new_game_action, SIGNAL(clicked()), this, SLOT(show_new_game_widget()));
 }
 
 void ClientGUI::EdgeButtonEvent()
@@ -72,7 +73,7 @@ bool ClientGUI::try_act(const EdgeButton* target_edge)
     return false;
   }
   functions_->retract_->setEnabled(true);
-  turning_switcher_->switch_turn();
+  switch_player();
   judge_over();
   return true;
 }
@@ -83,7 +84,7 @@ void ClientGUI::PassButtonEvent()
   game_->Pass();
   select_manager_->clear_edge();
   functions_->retract_->setEnabled(true);
-  turning_switcher_->switch_turn();
+  switch_player();
   judge_over();
 }
 
@@ -95,12 +96,18 @@ void ClientGUI::RetractButtonEvent()
     GameVariety game_var = game_->Retract();
     reset_game_variety(game_var);
     if (game_->get_round() == 0) { functions_->retract_->setEnabled(false); }
-    turning_switcher_->switch_turn();
+    switch_player();
   }
   catch (const game_exception& e)
   {
     notification_->setText(e.what());
   }
+}
+
+void ClientGUI::switch_player()
+{
+  turning_switcher_->switch_turn();
+  board_->set_hover_color(turning_switcher_->get_turn());
 }
 
 void ClientGUI::impl_game_variety(const GameVariety& game_var)
@@ -132,6 +139,7 @@ void ClientGUI::judge_over()
 {
   if (game_->is_over())
   {
+    QApplication::beep();
     set_act_enable(false);
     /* In local game, we support retract after an over game. */
     functions_->retract_->setEnabled(true);
@@ -140,8 +148,13 @@ void ClientGUI::judge_over()
 
 ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
 {
-  if (!is_offen)
+  if (is_offen)
   {
+    board_->set_hover_color(OFFEN_PLAYER);
+  }
+  else
+  {
+    board_->set_hover_color(DEFEN_PLAYER);
     receive_and_process_request_async();
   }
 }
@@ -211,6 +224,7 @@ void ClientGUINetwork::receive_and_process_request_async()
     judge_over();
     /* If player has no edges on board, forbidden retract. */
     if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }
+    QApplication::alert(this);
   });
 }
 
@@ -248,6 +262,7 @@ void ClientGUINetwork::judge_over()
 {
   if (game_->is_over())
   {
+    QApplication::beep();
     set_act_enable(false);
   }
 }

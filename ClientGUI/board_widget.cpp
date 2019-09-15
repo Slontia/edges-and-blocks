@@ -1,5 +1,6 @@
 #include "board_widget.h"
 #include <cassert>
+#include <iostream>
 #define REVERSE_PARA(a, b, reverse) (reverse) ? (b) : (a), (reverse) ? (a) : (b)
 
 std::unordered_map<int, QString> AreaButton::player2color_ =
@@ -7,6 +8,12 @@ std::unordered_map<int, QString> AreaButton::player2color_ =
   {OFFEN_PLAYER, "black"},
   {DEFEN_PLAYER, "red"},
   {NO_PLAYER, "white"}
+};
+
+std::unordered_map<int, QString> EdgeButton::player2hovercolor_ =
+{
+  {OFFEN_PLAYER, "#888888"},
+  {DEFEN_PLAYER, "#FF8888"}
 };
 
 const QString EdgeButton::selected_color_ = "yellow";
@@ -42,9 +49,10 @@ BlockButton::BlockButton(const AreaPos& pos, QWidget* parent) :
   resize(kBlockSideLength, kBlockSideLength);
 }
 
-
 EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent) :
-  AreaButton(QPoint(REVERSE_PARA(kZeroLoc, 0, is_vert)), pos, parent), edge_type_(is_vert ? VERT_EDGE_AREA : HORI_EDGE_AREA)
+  AreaButton(QPoint(REVERSE_PARA(kZeroLoc, 0, is_vert)), pos, parent), 
+  edge_type_(is_vert ? VERT_EDGE_AREA : HORI_EDGE_AREA), 
+  color_(player2color_[NO_PLAYER]), hover_color_("")
 {
   assert(pos.x() < side_unit_num && pos.y() < side_unit_num);
   const bool& is_side_edge = (is_vert ? pos.x() : pos.y()) == 0;
@@ -76,6 +84,12 @@ void EdgeButton::cancel_select()
 AreaType EdgeButton::get_edge_type() const
 {
   return edge_type_;
+}
+
+void EdgeButton::set_player(const PlayerType& old_player, const PlayerType& new_player)
+{
+  AreaButton::set_player(old_player, new_player);
+  set_hover_color("");
 }
 
 BoardWidget::BoardWidget(QWidget* parent, const QPoint& location) : QWidget(parent)
@@ -115,10 +129,58 @@ void BoardWidget::reset_game_variety(const GameVariety& game_var)
       buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.new_player_, var.old_player_);
 }
 
+void EdgeButton::set_color(const QString& color)
+{
+  color_ = color;
+  refresh_stylesheet();
+}
+
+void EdgeButton::set_hover_color(const QString& color)
+{
+  hover_color_ = color;
+  refresh_stylesheet();
+}
+
+void EdgeButton::refresh_stylesheet()
+{
+  QString style = "";
+  if (!color_.isEmpty()) { style += "QPushButton{background-color:" + color_ + ";}";  }
+  if (!hover_color_.isEmpty()) { style += "QPushButton:hover{background-color:" + hover_color_ + ";}"; }
+  setStyleSheet(style);
+}
+
+void BoardWidget::set_hover_color(const PlayerType& cur_player)
+{
+  auto set_edge_buttons_enable = [&](AreaType type)
+  {
+    for (const auto& area_row_btns : buttons_[type])
+    {
+      for (const auto& button : area_row_btns)
+      {
+        if (button->get_player() == NO_PLAYER)
+        {
+          reinterpret_cast<EdgeButton *const>(button)->set_hover_color(EdgeButton::player2hovercolor_[cur_player]);
+        }
+      }
+    }
+  };
+  set_edge_buttons_enable(HORI_EDGE_AREA);
+  set_edge_buttons_enable(VERT_EDGE_AREA);
+  
+}
+
 void BoardWidget::set_enable(bool enable)
 {
-  for (const auto& area_btns : buttons_)
-    for (const auto& area_row_btns : area_btns)
+  auto set_edge_buttons_enable = [&](AreaType type)
+  {
+    for (const auto& area_row_btns : buttons_[type])
+    {
       for (const auto& button : area_row_btns)
+      {
         button->setEnabled(enable);
+      }
+    }
+  };
+  set_edge_buttons_enable(HORI_EDGE_AREA);
+  set_edge_buttons_enable(VERT_EDGE_AREA);
 }

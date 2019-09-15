@@ -58,6 +58,7 @@ private:
   const QPoint kNotificationLocation = QPoint(600, 400);
   Ui::ClientGUIClass ui;
   GameInfo* game_info_;
+  void switch_player();
 };
 
 class ClientGUINetwork : public ClientGUI
