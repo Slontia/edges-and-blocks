@@ -176,7 +176,7 @@ void ClientGUINetwork::receive_and_process_request_async()
         game_->Move(move_request.old_edge_type_, move_request.old_pos_,
         move_request.new_edge_type_, move_request.new_pos_,
         turning_switcher_->get_turn()));
-      turning_switcher_->switch_turn();
+      switch_player();
     }
     else if (request->type_ == PLACE_REQUEST)
     {
@@ -188,7 +188,7 @@ void ClientGUINetwork::receive_and_process_request_async()
     else if (request->type_ == PASS_REQUEST)
     {
       game_->Pass();
-      turning_switcher_->switch_turn();
+      switch_player();
     }
     else if (request->type_ == RETRACT_REQUEST)
     {
@@ -265,4 +265,9 @@ void ClientGUINetwork::judge_over()
     QApplication::beep();
     set_act_enable(false);
   }
+}
+
+void ClientGUINetwork::switch_player()
+{
+  turning_switcher_->switch_turn();
 }
