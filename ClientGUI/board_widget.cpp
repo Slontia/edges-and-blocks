@@ -7,7 +7,7 @@ std::unordered_map<int, QString> AreaButton::player2color_ =
 {
   {OFFEN_PLAYER, "black"},
   {DEFEN_PLAYER, "red"},
-  {NO_PLAYER, "white"}
+  {NO_PLAYER, "rgba(255,255,255,100)"}
 };
 
 std::unordered_map<int, QString> EdgeButton::player2hovercolor_ =
@@ -28,7 +28,7 @@ AreaButton::AreaButton(const QPoint& loc_offset, const AreaPos& pos, QWidget* pa
 
 void AreaButton::set_color(const QString& color)
 {
-  setStyleSheet(static_cast<QString>("QPushButton{background-color:") + color + ";}");
+  setStyleSheet(static_cast<QString>("QPushButton{border-style:none;padding:10px;border-radius:3px;background-color:") + color + ";}");
 }
 
 void AreaButton::set_player(const PlayerType& old_player, const PlayerType& new_player)
@@ -47,6 +47,7 @@ BlockButton::BlockButton(const AreaPos& pos, QWidget* parent) :
   AreaButton(QPoint(kZeroLoc, kZeroLoc), pos, parent)
 {
   resize(kBlockSideLength, kBlockSideLength);
+  setEnabled(false);
 }
 
 EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent) :
@@ -144,7 +145,7 @@ void EdgeButton::set_hover_color(const QString& color)
 void EdgeButton::refresh_stylesheet()
 {
   QString style = "";
-  if (!color_.isEmpty()) { style += "QPushButton{background-color:" + color_ + ";}";  }
+  if (!color_.isEmpty()) { style += "QPushButton{border-style:none;background-color:" + color_ + ";}";  }
   if (!hover_color_.isEmpty()) { style += "QPushButton:hover{background-color:" + hover_color_ + ";}"; }
   setStyleSheet(style);
 }

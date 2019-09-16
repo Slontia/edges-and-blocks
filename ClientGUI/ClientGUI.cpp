@@ -11,12 +11,17 @@
 #include <QMessageBox>
 #include <thread>
 #include <QThread>
+#include <QDir>
+
+#define RESOURCE_BACKGROUND_PIC "/background.jpg"
 
 ClientGUI::ClientGUI(QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>()), select_manager_(std::make_unique<MovingSelectManager>())
 {
     ui.setupUi(this);
     setFixedSize(kWindowSize);
+    setWindowTitle("Edges And Blocks");
+
     turning_switcher_ = new TurningSwitcher(this, kTurningLocation);
     functions_ = new GameFunctions(this, kFunctionsLocation);
     game_info_ = new GameInfo(this, kGameInfoLocation, *game_);
@@ -27,6 +32,15 @@ ClientGUI::ClientGUI(QWidget *parent)
     notification_->move(kNotificationLocation);
     notification_->resize(160, 80);
     notification_->setEnabled(false);
+    QPalette pl = notification_->palette();
+    pl.setBrush(QPalette::Base, QBrush(QColor(150, 0, 0, 0)));
+    notification_->setPalette(pl);
+
+    setAutoFillBackground(true);
+    QPixmap pixmap(QDir::currentPath() + RESOURCE_BACKGROUND_PIC);
+    QPalette palette;
+    palette.setBrush(backgroundRole(), QBrush(pixmap));
+    setPalette(palette);
 
     //QMenu *game_menu = menuBar()->addMenu(tr("Game"));
     //QAction *new_game_action = new QAction(tr("New Game"));
@@ -95,6 +109,7 @@ void ClientGUI::RetractButtonEvent()
   {
     GameVariety game_var = game_->Retract();
     reset_game_variety(game_var);
+    set_act_enable(true);
     if (game_->get_round() == 0) { functions_->retract_->setEnabled(false); }
     switch_player();
   }

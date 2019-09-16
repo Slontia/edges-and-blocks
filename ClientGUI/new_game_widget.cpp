@@ -24,6 +24,7 @@ NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nul
   port_edit_(new QLineEdit(this))
 {
   setFixedSize(225, 100);
+  setWindowTitle("New Game");
 
   QObject::connect(local_game_, SIGNAL(clicked()), this, SLOT(open_client_gui_local()));
   local_game_->setFixedSize(100, 30);
