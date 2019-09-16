@@ -13,7 +13,7 @@
 #include <QThread>
 #include <QDir>
 
-#define RESOURCE_BACKGROUND_PIC "/background.jpg"
+#define RESOURCE_BACKGROUND_PIC "/resources/background.jpg"
 
 ClientGUI::ClientGUI(QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>()), select_manager_(std::make_unique<MovingSelectManager>())
