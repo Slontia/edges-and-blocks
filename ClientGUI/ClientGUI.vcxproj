@@ -147,7 +147,13 @@
     <ClInclude Include="game_info_widget.h" />
     <ClInclude Include="moving_selector.h" />
     <ClInclude Include="new_game_widget.h" />
+    <ClInclude Include="resource3.h" />
+    <ClInclude Include="resource4.h" />
     <ClInclude Include="switcher.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ClientGUI3.rc" />
+    <ResourceCompile Include="ClientGUI4.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

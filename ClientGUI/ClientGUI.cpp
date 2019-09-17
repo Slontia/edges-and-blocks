@@ -13,14 +13,13 @@
 #include <QThread>
 #include <QDir>
 
-#define RESOURCE_BACKGROUND_PIC "/resources/background.jpg"
-
 ClientGUI::ClientGUI(QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>()), select_manager_(std::make_unique<MovingSelectManager>())
 {
     ui.setupUi(this);
     setFixedSize(kWindowSize);
     setWindowTitle("Edges And Blocks");
+    setWindowIcon(QIcon(QDir::currentPath() + RESOURCE_ICON));
 
     turning_switcher_ = new TurningSwitcher(this, kTurningLocation);
     functions_ = new GameFunctions(this, kFunctionsLocation);
@@ -32,8 +31,9 @@ ClientGUI::ClientGUI(QWidget *parent)
     notification_->move(kNotificationLocation);
     notification_->resize(160, 80);
     notification_->setEnabled(false);
+    notification_->setTextColor(QColor(0, 0, 0));
     QPalette pl = notification_->palette();
-    pl.setBrush(QPalette::Base, QBrush(QColor(150, 0, 0, 0)));
+    pl.setBrush(QPalette::Base, QBrush(QColor(0, 0, 0, 0)));
     notification_->setPalette(pl);
 
     setAutoFillBackground(true);

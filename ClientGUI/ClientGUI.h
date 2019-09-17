@@ -11,6 +11,9 @@
 #include "../GameCore/game.h"
 #include "moving_selector.h"
 
+#define RESOURCE_BACKGROUND_PIC "/resources/background.jpg"
+#define RESOURCE_ICON "/resources/client.ico"
+
 class ClientAsyncWrapper;
 
 class ClientGUI;

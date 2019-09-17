@@ -8,6 +8,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QString>
+#include <QDir>
 
 #if 0
 static const QString kDefaultIP = "47.98.225.186";
@@ -25,6 +26,7 @@ NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nul
 {
   setFixedSize(225, 100);
   setWindowTitle("New Game");
+  setWindowIcon(QIcon(QDir::currentPath() + RESOURCE_ICON));
 
   QObject::connect(local_game_, SIGNAL(clicked()), this, SLOT(open_client_gui_local()));
   local_game_->setFixedSize(100, 30);
