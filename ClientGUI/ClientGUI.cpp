@@ -237,6 +237,7 @@ void ClientGUINetwork::receive_and_process_request_async()
     }
     set_act_enable(true);
     judge_over();
+    board_->set_hover_color(turning_switcher_->get_turn());
     /* If player has no edges on board, forbidden retract. */
     if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }
     QApplication::alert(this);

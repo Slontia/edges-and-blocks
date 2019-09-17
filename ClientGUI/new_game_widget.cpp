@@ -9,7 +9,7 @@
 #include <QLabel>
 #include <QString>
 
-#if 1
+#if 0
 static const QString kDefaultIP = "47.98.225.186";
 static const QString kDefaultPort = "52173";
 #else
@@ -102,6 +102,8 @@ void NewGameWidget::network_forbidden_new_game()
   QObject::connect(network_game_, SIGNAL(clicked()), this, SLOT(cancel_client_gui_network()));
   local_game_->setEnabled(false);
   network_game_->setText("Cancel");
+  ip_edit_->setEnabled(false);
+  port_edit_->setEnabled(false);
 }
 
 void NewGameWidget::network_allow_new_game()
@@ -110,4 +112,6 @@ void NewGameWidget::network_allow_new_game()
   QObject::connect(network_game_, SIGNAL(clicked()), this, SLOT(wait_for_open_client_gui_network()));
   local_game_->setEnabled(true);
   network_game_->setText("Network Game");
+  ip_edit_->setEnabled(true);
+  port_edit_->setEnabled(true);
 }

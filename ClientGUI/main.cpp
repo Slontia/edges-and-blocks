@@ -8,7 +8,8 @@
 void set_font(QApplication& a)
 {
   QFont font = a.font();
-  font.setPointSize(9);
+  //font.setPointSize(9);
+  font.setPixelSize(12);
   a.setFont(font);
 }
 
