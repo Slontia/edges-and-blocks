@@ -72,7 +72,7 @@ const Board::OccuCounts& Board::get_edge_occu_counts() const
 
 void Board::reset_game_variety(const GameVariety& game_var)
 {
-  for (const auto& vars : game_var.area_varieties_)
-    for (const auto var : vars)
+  for (int i = game_var.area_varieties_.size() - 1; i >= 0; --i)
+    for (const auto var : game_var.area_varieties_[i])
       get_area(var.pos_, var.type_)->set_player(var.old_player_);
 }

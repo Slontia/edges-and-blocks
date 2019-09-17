@@ -125,8 +125,8 @@ void BoardWidget::impl_game_variety(const GameVariety& game_var)
 
 void BoardWidget::reset_game_variety(const GameVariety& game_var)
 {
-  for (const auto& vars : game_var.area_varieties_)
-    for (const auto& var: vars)
+  for (int i = game_var.area_varieties_.size() - 1; i >= 0; -- i)
+    for (const auto& var : game_var.area_varieties_[i])
       buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.new_player_, var.old_player_);
 }
 
