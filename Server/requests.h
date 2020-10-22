@@ -94,7 +94,7 @@ struct HeartbeatRequest : public Request
 };
 
 template <class R>
-void send_request(const R& request, SOCKET& socket)
+void send_request(const R& request, const SOCKET socket)
 {
   static_assert(std::is_base_of_v<Request, R>);
   std::cout << "Sending...";
@@ -106,12 +106,12 @@ void send_request(const R& request, SOCKET& socket)
   std::cout << request << std::endl;
 }
 
-inline void send_heartbeat(SOCKET& socket, SourceType source)
+inline void send_heartbeat(const SOCKET socket, SourceType source)
 {
   return send_request(HeartbeatRequest(source), socket);
 }
 
-inline const std::pair<Request*, int> receive_request(SOCKET& socket, char* buffer)
+inline const std::pair<Request*, int> receive_request(const SOCKET socket, char* buffer)
 {
   std::cout << "Receiving...";
   memset(buffer, 0, MAX_REQUEST_SIZE);

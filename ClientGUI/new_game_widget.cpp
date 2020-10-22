@@ -10,13 +10,7 @@
 #include <QString>
 #include <QDir>
 
-#if 0
-static const QString kDefaultIP = "47.98.225.186";
-static const QString kDefaultPort = "52173";
-#else
-static const QString kDefaultIP = "127.0.0.1";
-static const QString kDefaultPort = "9810";
-#endif
+static auto config_file_name = TEXT(".\\config.ini");
 
 NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nullptr), 
   local_game_(new QPushButton("Local Game", this)), 
@@ -35,18 +29,22 @@ NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nul
   QObject::connect(network_game_, SIGNAL(clicked()), this, SLOT(wait_for_open_client_gui_network()));
   network_game_->setFixedSize(100, 30);
   network_game_->move(115, 10);
-  
+
+  TCHAR ip_conf_buf[20] = { 0 };
+  GetPrivateProfileString(TEXT("Server"), TEXT("ip"), TEXT("127.0.0.1\0"), ip_conf_buf, 20, config_file_name);
   (new QLabel("IP Address:",this))->move(20, 40);
   QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
   QRegExp ipRegex("^" + ipRange + "\\." + ipRange + "\\." + ipRange + "\\." + ipRange + "$");
   ip_edit_->setValidator(new QRegExpValidator(ipRegex, ip_edit_));
-  ip_edit_->setPlaceholderText(kDefaultIP);
+  ip_edit_->setText(QString::fromWCharArray(ip_conf_buf, wcslen(ip_conf_buf)));
   ip_edit_->move(100, 45);
   ip_edit_->setFixedSize(110, 20);
 
+  TCHAR port_conf_buf[20] = { 0 };
+  GetPrivateProfileString(TEXT("Server"), TEXT("port"), TEXT("9810\0"), port_conf_buf, 20, config_file_name);
   (new QLabel("Port:", this))->move(20, 65);
   port_edit_->setValidator(new QIntValidator(port_edit_));
-  port_edit_->setPlaceholderText(kDefaultPort);
+  port_edit_->setText(QString::fromWCharArray(port_conf_buf, wcslen(port_conf_buf)));
   port_edit_->move(100, 70);
   port_edit_->setFixedSize(40, 20);
   port_edit_->setMaxLength(5);
@@ -63,15 +61,15 @@ void NewGameWidget::wait_for_open_client_gui_network()
   try
   {
     assert(client_ == nullptr);
-    client_ = std::make_unique<ClientAsyncWrapper>(
-      ip_edit_->text().isEmpty() ? kDefaultIP.toStdString() : ip_edit_->text().toStdString(), 
-      port_edit_->text().isEmpty() ? kDefaultPort.toInt() : port_edit_->text().toInt());
+    client_ = std::make_unique<ClientAsyncWrapper>(ip_edit_->text().toStdString(), port_edit_->text().toInt());
     client_->wait_for_game_start_async([&](bool is_offen)
     {
       /* We use shared_ptr instead of unique_ptr to support polymorphic. */
       auto client_gui = std::make_shared<ClientGUINetwork>(client_, is_offen);
       open_client_gui(std::dynamic_pointer_cast<ClientGUI>(client_gui));
     });
+    WritePrivateProfileString(TEXT("Server"), TEXT("ip"), ip_edit_->text().toStdWString().c_str(), TEXT(".\\config.ini"));
+    WritePrivateProfileString(TEXT("Server"), TEXT("port"), port_edit_->text().toStdWString().c_str(), TEXT(".\\config.ini"));
   }
   catch (std::exception& e)
   {
