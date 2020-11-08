@@ -183,6 +183,7 @@ void ClientGUINetwork::receive_and_process_request_async()
     {
       QMessageBox::information(this, "Info", "Your opponent lost the connection, you win the game.");
       set_act_enable(false);
+      return;
     }
     else if (request->type_ == MOVE_REQUEST)
     {
@@ -280,6 +281,7 @@ void ClientGUINetwork::judge_over()
   {
     QApplication::beep();
     set_act_enable(false);
+    client_ = nullptr;
   }
 }
 
