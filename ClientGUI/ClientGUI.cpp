@@ -289,3 +289,4 @@ void ClientGUINetwork::switch_player()
 {
   turning_switcher_->switch_turn();
 }
+

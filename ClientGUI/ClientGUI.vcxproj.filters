@@ -112,4 +112,13 @@
     <ResourceCompile Include="ClientGUI3.rc" />
     <ResourceCompile Include="ClientGUI4.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="Resources\create_block.wav" />
+    <Media Include="Resources\destroy_block.wav" />
+    <Media Include="Resources\fall_edge.wav" />
+    <Media Include="Resources\start_game.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="wave1.bin" />
+  </ItemGroup>
 </Project>

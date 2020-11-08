@@ -8,7 +8,10 @@
 #include "../GameCore/game.h"
 #include <winsock2.h>
 #include <windows.h>
+#include <Mmsystem.h>
+#include "resource3.h"
 #include "ui_ClientGUI.h"
+#pragma comment(lib,"winmm.lib")
 
 static const int kBlockSideLength = 45;
 static const int kEdgeWidth = 16;
@@ -29,7 +32,7 @@ protected:
 public:
   static std::unordered_map<int, QString> player2color_;
   PlayerType get_player() const { return player_; }
-  virtual void set_player(const PlayerType& old_player, const PlayerType& new_player);
+  virtual void set_player(const PlayerType& old_player, const PlayerType& new_player, const bool play_sound);
   Coordinate get_pos() const;
 };
 
@@ -37,6 +40,7 @@ class BlockButton : public AreaButton
 {
 public:
   BlockButton(const AreaPos& pos, QWidget* parent);
+  virtual void set_player(const PlayerType& old_player, const PlayerType& new_player, const bool play_sound);
 };
 
 class EdgeButton : public AreaButton
@@ -52,7 +56,7 @@ public:
   void cancel_select();
   AreaType get_edge_type() const;
   void set_hover_color(const QString& color);
-  virtual void set_player(const PlayerType& old_player, const PlayerType& new_player);
+  virtual void set_player(const PlayerType& old_player, const PlayerType& new_player, const bool play_sound);
 private:
   QString color_;
   QString hover_color_;
@@ -73,3 +77,6 @@ public:
   void set_enable(bool enable);
   void set_hover_color(const PlayerType& cur_player);
 };
+
+extern HMODULE hModule;
+bool play_sound_as_resource(const int sound_id);

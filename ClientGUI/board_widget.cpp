@@ -31,7 +31,7 @@ void AreaButton::set_color(const QString& color)
   setStyleSheet(static_cast<QString>("QPushButton{border-style:none;padding:10px;border-radius:3px;background-color:") + color + ";}");
 }
 
-void AreaButton::set_player(const PlayerType& old_player, const PlayerType& new_player)
+void AreaButton::set_player(const PlayerType& old_player, const PlayerType& new_player, const bool play_sound)
 {
   assert(old_player == player_);
   player_ = new_player;
@@ -48,6 +48,15 @@ BlockButton::BlockButton(const AreaPos& pos, QWidget* parent) :
 {
   resize(kBlockSideLength, kBlockSideLength);
   setEnabled(false);
+}
+
+void BlockButton::set_player(const PlayerType& old_player, const PlayerType& new_player, const bool play_sound)
+{
+  AreaButton::set_player(old_player, new_player, play_sound);
+  if (play_sound)
+  {
+    play_sound_as_resource(new_player == NO_PLAYER ? DESTROY_BLOCK_WAVE : CREATE_BLOCK_WAVE);
+  }
 }
 
 EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent) :
@@ -87,10 +96,14 @@ AreaType EdgeButton::get_edge_type() const
   return edge_type_;
 }
 
-void EdgeButton::set_player(const PlayerType& old_player, const PlayerType& new_player)
+void EdgeButton::set_player(const PlayerType& old_player, const PlayerType& new_player, const bool play_sound)
 {
-  AreaButton::set_player(old_player, new_player);
+  AreaButton::set_player(old_player, new_player, play_sound);
   set_hover_color("");
+  if (play_sound && new_player != NO_PLAYER)
+  {
+    play_sound_as_resource(FALL_EDGE_WAVE);
+  }
 }
 
 BoardWidget::BoardWidget(QWidget* parent, const QPoint& location) : QWidget(parent)
@@ -108,16 +121,23 @@ BoardWidget::BoardWidget(QWidget* parent, const QPoint& location) : QWidget(pare
   }
   move(location);
   resize(QSize(kUnitWidth, kUnitWidth) * Game::kBoardSideLen + QSize(kGapWidth + kEdgeWidth / 2, kGapWidth + kEdgeWidth / 2));
+  play_sound_as_resource(START_GAME_WAVE);
 }
 
 void BoardWidget::impl_game_variety(const GameVariety& game_var)
 {
+  bool first_act = true;
   for (const auto& vars : game_var.area_varieties_)
   {
     if (vars.empty())
+    {
       continue;
+    }
     for (const AreaVariety& var : vars)
-      buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.old_player_, var.new_player_);
+    {
+      buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.old_player_, var.new_player_, first_act || var.type_ == BLOCK_AREA /* play_sound */);
+    }
+    first_act = false;
     qApp->processEvents();
     Sleep(kSleepMs);
   }
@@ -125,9 +145,13 @@ void BoardWidget::impl_game_variety(const GameVariety& game_var)
 
 void BoardWidget::reset_game_variety(const GameVariety& game_var)
 {
-  for (int i = game_var.area_varieties_.size() - 1; i >= 0; -- i)
+  for (int i = game_var.area_varieties_.size() - 1; i >= 0; --i)
+  {
     for (const auto& var : game_var.area_varieties_[i])
-      buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.new_player_, var.old_player_);
+    {
+      buttons_[var.type_][var.pos_.x_][var.pos_.y_]->set_player(var.new_player_, var.old_player_, false /* play_sound */);
+    }
+  }
 }
 
 void EdgeButton::set_color(const QString& color)
@@ -184,4 +208,35 @@ void BoardWidget::set_enable(bool enable)
   };
   set_edge_buttons_enable(HORI_EDGE_AREA);
   set_edge_buttons_enable(VERT_EDGE_AREA);
+}
+
+HMODULE hModule;
+
+bool play_sound_as_resource(const int sound_id)
+{
+  bool ret = false;
+
+  // Find the WAVE resource. 
+  auto hResInfo = FindResource(hModule, MAKEINTRESOURCE(sound_id), TEXT("WAVE"));
+  if (hResInfo == NULL) { return false; }
+
+  // Load the WAVE resource. 
+  auto hRes = LoadResource(hModule, hResInfo);
+  if (hRes == NULL) { return false; }
+
+  // Lock the WAVE resource and play it. 
+  auto lpRes = LockResource(hRes);
+  if (lpRes != NULL)
+  {
+    ret = sndPlaySound(static_cast<LPCWSTR>(lpRes), SND_MEMORY | SND_ASYNC | SND_NODEFAULT);
+    UnlockResource(hRes);
+  }
+  else
+  {
+    ret = false;
+  }
+
+  // Free the WAVE resource and return success or failure. 
+  FreeResource(hRes);
+  return ret;
 }

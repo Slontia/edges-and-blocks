@@ -155,6 +155,15 @@
     <ResourceCompile Include="ClientGUI3.rc" />
     <ResourceCompile Include="ClientGUI4.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="Resources\create_block.wav" />
+    <Media Include="Resources\destroy_block.wav" />
+    <Media Include="Resources\fall_edge.wav" />
+    <Media Include="Resources\start_game.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="wave1.bin" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
     <Import Project="$(QtMsBuild)\qt.targets" />
