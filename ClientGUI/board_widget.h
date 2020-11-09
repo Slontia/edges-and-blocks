@@ -9,7 +9,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <Mmsystem.h>
-#include "resource3.h"
+#include "resource.h"
 #include "ui_ClientGUI.h"
 #pragma comment(lib,"winmm.lib")
 

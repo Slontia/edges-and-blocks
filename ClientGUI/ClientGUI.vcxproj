@@ -147,22 +147,17 @@
     <ClInclude Include="game_info_widget.h" />
     <ClInclude Include="moving_selector.h" />
     <ClInclude Include="new_game_widget.h" />
-    <ClInclude Include="resource3.h" />
-    <ClInclude Include="resource4.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="switcher.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ClientGUI3.rc" />
-    <ResourceCompile Include="ClientGUI4.rc" />
+    <ResourceCompile Include="ClientGUI.rc" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="Resources\create_block.wav" />
     <Media Include="Resources\destroy_block.wav" />
     <Media Include="Resources\fall_edge.wav" />
     <Media Include="Resources\start_game.wav" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="wave1.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

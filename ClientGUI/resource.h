@@ -1,12 +1,17 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by ClientGUI.rc
+// Microsoft Visual C++ 生成的包含文件。
+// 供 ClientGUI3.rc 使用
+//
+#define CREATE_BLOCK_WAVE               101
+#define DESTROY_BLOCK_WAVE              102
+#define FALL_EDGE_WAVE                  103
+#define START_GAME_WAVE                 104
 
-// 新对象的下一组默认值
+// Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        101
+#define _APS_NEXT_RESOURCE_VALUE        106
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
