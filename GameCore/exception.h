@@ -12,5 +12,5 @@ public:
   static void check_game_not_over(const Game& game);
   static void check_player(const PlayerType& player);
   static void check_pos(const Coordinate& pos, const Board& board);
-  game_exception(char* msg) : std::exception(msg) {}
+  game_exception(const char* const msg) : std::exception(msg) {}
 };

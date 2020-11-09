@@ -181,8 +181,7 @@ void ClientGUINetwork::receive_and_process_request_async()
   {
     if (!request)
     {
-      QMessageBox::information(this, "Info", "Your opponent lost the connection, you win the game.");
-      set_act_enable(false);
+      lost_connection();
       return;
     }
     else if (request->type_ == MOVE_REQUEST)
@@ -214,7 +213,15 @@ void ClientGUINetwork::receive_and_process_request_async()
         reset_game_variety(game_->Retract());
         reset_game_variety(game_->Retract());
       }
-      client_->send_request(RetractAckRequest(agree));
+      try
+      {
+        client_->send_request(RetractAckRequest(agree));
+      }
+      catch (std::exception e)
+      {
+        lost_connection();
+        return;
+      }
       receive_and_process_request_async();
       return; /* Avoid switch player. */
     }
@@ -235,6 +242,7 @@ void ClientGUINetwork::receive_and_process_request_async()
     else
     {
       /* TODO: handle unexpected requests */
+      throw game_exception(("Unknown request type " + std::to_string(request->type_)).c_str());
     }
     set_act_enable(true);
     judge_over();
@@ -248,14 +256,22 @@ void ClientGUINetwork::receive_and_process_request_async()
 bool ClientGUINetwork::try_act(const EdgeButton* target_edge)
 {
   if (!ClientGUI::try_act(target_edge)) return false;
-  if (const EdgeButton* selected_edge = select_manager_->get_edge())
+  try
   {
-    client_->send_request(MoveRequest(selected_edge->get_edge_type(), selected_edge->get_pos(),
-                          target_edge->get_edge_type(), target_edge->get_pos()));
+		if (const EdgeButton* selected_edge = select_manager_->get_edge())
+		{
+			client_->send_request(MoveRequest(selected_edge->get_edge_type(), selected_edge->get_pos(),
+														target_edge->get_edge_type(), target_edge->get_pos()));
+		}
+		else
+		{
+			client_->send_request(PlaceRequest(target_edge->get_edge_type(), target_edge->get_pos()));
+		}
   }
-  else
+  catch (std::exception e)
   {
-    client_->send_request(PlaceRequest(target_edge->get_edge_type(), target_edge->get_pos()));
+    lost_connection();
+    return false;
   }
   receive_and_process_request_async();
   return true;
@@ -264,13 +280,29 @@ bool ClientGUINetwork::try_act(const EdgeButton* target_edge)
 void ClientGUINetwork::PassButtonEvent()
 {
   ClientGUI::PassButtonEvent();
-  client_->send_request(PassRequest());
+  try
+  {
+    client_->send_request(PassRequest());
+  }
+  catch (std::exception e)
+  {
+    lost_connection();
+    return;
+  }
   receive_and_process_request_async();
 }
 
 void ClientGUINetwork::RetractButtonEvent()
 {
-  client_->send_request(RetractRequest());
+  try
+  {
+    client_->send_request(RetractRequest());
+  }
+  catch (std::exception e)
+  {
+    lost_connection();
+    return;
+  }
   notification_->setText("Waiting for response...");
   receive_and_process_request_async();
 }
@@ -288,5 +320,11 @@ void ClientGUINetwork::judge_over()
 void ClientGUINetwork::switch_player()
 {
   turning_switcher_->switch_turn();
+}
+
+void ClientGUINetwork::lost_connection()
+{
+	QMessageBox::information(this, "Info", "Lost connection with your opponent.");
+	set_act_enable(false);
 }
 
