@@ -2,6 +2,7 @@
 #include "area.h"
 #include <cassert>
 #include "board.h"
+#include "game.h"
 
 Area::Area(Board& board, const Coordinate& pos, const AreaType& type, std::array<int, kPlayerTypeCount>& player_counts)
   : board_(board), pos_(pos), type_(type), occu_player_(NO_PLAYER), player_counts_(player_counts) {}
@@ -38,7 +39,7 @@ BlockArea::BlockArea(Board& board, const Coordinate& pos, std::array<int, kPlaye
 
 BlockArea::~BlockArea() {}
 
-BlockArea::AdjaceEdges BlockArea::get_adjace_edges()
+BlockArea::AdjaceEdges BlockArea::get_adjace_edges() const
 {
   auto get_edge = [this](const unsigned int& x, const unsigned int& y, const AreaType& type)
   {
@@ -53,38 +54,58 @@ BlockArea::AdjaceEdges BlockArea::get_adjace_edges()
   };
 }
 
-bool BlockArea::is_broken()
+bool BlockArea::is_broken() const
 {
-  if (occu_player_ == NO_PLAYER) 
-    return false;
+  if (occu_player_ == NO_PLAYER) { return false; } 
   for (const auto& edge : get_adjace_edges())
+  {
     if (const auto player = edge->get_player(); player != occu_player_ && player != NO_PLAYER)
+    {
       return true;
+    }
+  }
   return false;
 }
 
-bool BlockArea::is_occupied_by(const PlayerType& p)
+bool BlockArea::is_occupied_by(const PlayerType& p) const
 {
   assert(p != NO_PLAYER);
   for (const auto& edge : get_adjace_edges())
-    if (edge->get_player() != p)
-      return false;
+  {
+    if (edge->get_player() != p) { return false; }
+  }
   return true;
 }
 
-EdgeAreaPtr BlockArea::is_captured_by(const PlayerType& p)
+std::array<int32_t, kPlayerTypeCount> BlockArea::score() const
+{
+  static const int32_t kScoreTable[kEdgeCountAdjaceBlock + 1][kEdgeCountAdjaceBlock + 1] =
+  {
+    {0 ,0 ,0 ,0 ,0 },
+    {1 ,0 ,0 ,0 ,0 },
+    {2 ,2 ,0 ,0 ,0 },
+    {4 ,1 ,0 ,0 ,0 },
+    {4 ,0 ,0 ,0 ,0 }
+  };
+  std::array<int32_t, kPlayerTypeCount> scores = { 0 };
+  for (const auto& edge : get_adjace_edges())
+  {
+    if (const PlayerType p = edge->get_player(); p != NO_PLAYER) { ++scores[p]; }
+  }
+  return { kScoreTable[0][1], kScoreTable[1][0] };
+}
+
+EdgeAreaPtr BlockArea::is_captured_by(const PlayerType& p) const
 {
   assert(p != NO_PLAYER);
   const PlayerType oppo = (p == DEFEN_PLAYER) ? OFFEN_PLAYER : DEFEN_PLAYER;
   EdgeAreaPtr oppo_edge = nullptr;
   for (const auto& edge : get_adjace_edges())
   {
-    if (edge->get_player() == NO_PLAYER)
-      return nullptr; // has free edge
+    if (edge->get_player() == NO_PLAYER) { return nullptr; } // has free edge
     if (edge->get_player() == oppo)
     {
-      if (oppo_edge)
-        return nullptr; // more than one oppo edges
+      if (oppo_edge) { return nullptr; } // more than one oppo edges
       oppo_edge = edge;
     }
   }
@@ -145,8 +166,9 @@ EdgeArea::AdjaceEdges EdgeArea::get_adjace_edges()
 bool EdgeArea::is_adjace(const EdgeArea& edge)
 {
   for (const auto& adjaced_edge : get_adjace_edges())
-    if (edge == *adjaced_edge)
-      return true;
+  {
+    if (edge == *adjaced_edge) { return true; }
+  }
   return false;
 }
 

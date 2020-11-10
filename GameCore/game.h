@@ -10,10 +10,10 @@
 class Game
 {
 public:
-  static const unsigned int kWinnerBlockOccuCount = 5;
-  static const unsigned int kInitOffenEdgeOwnCount = 6;
-  static const unsigned int kInitDefenEdgeOwnCount = 6;
-  static const unsigned int kBoardSideLen = 8;
+  static constexpr unsigned int kWinnerBlockOccuCount = 5;
+  static constexpr unsigned int kInitOffenEdgeOwnCount = 6;
+  static constexpr unsigned int kInitDefenEdgeOwnCount = 6;
+  static constexpr unsigned int kBoardSideLen = 8;
   static PlayerType get_oppo_player(const PlayerType& p);
   Game();
   ~Game();

@@ -69,14 +69,14 @@ class ClientGUINetwork : public ClientGUI
   Q_OBJECT
 
 public:
-  ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>&& client, const bool& is_offen, QWidget *parent = Q_NULLPTR);
+  ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>&& client, const bool& is_offen, QWidget* parent = Q_NULLPTR);
 
 public slots:
   virtual void PassButtonEvent();
   virtual void RetractButtonEvent();
 
 protected:
-  virtual bool try_act(const EdgeButton* target_edge);
+  virtual bool try_act(const EdgeButton* target_edge) override;
   virtual void closeEvent(QCloseEvent* event) override;
 
 private:
@@ -86,3 +86,13 @@ private:
   virtual void judge_over() override;
   virtual void switch_player() override;
 };
+
+class ClientGUICom : public ClientGUI
+{
+  Q_OBJECT
+
+public:
+  ClientGUICom(const bool& is_offen, QWidget* parent = Q_NULLPTR);
+
+};
+

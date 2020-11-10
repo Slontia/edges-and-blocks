@@ -17,6 +17,7 @@ public:
   const OccuCounts& get_block_occu_counts() const;
   const OccuCounts& get_edge_occu_counts() const;
   void reset_game_variety(const GameVariety& game_var);
+  int32_t score(const PlayerType& p) const;
 
 private:
   std::array<std::vector<std::vector<AreaPtr>>, kAreaTypeCount> areas_;

@@ -37,12 +37,13 @@ public:
   typedef std::array<EdgeAreaPtr, kEdgeCountAdjaceBlock> AdjaceEdges;
   BlockArea(Board& board, const Coordinate& pos, std::array<int, kPlayerTypeCount>& player_counts);
   virtual ~BlockArea();
-  bool is_broken();
-  bool is_occupied_by(const PlayerType& p);
-  EdgeAreaPtr is_captured_by(const PlayerType& p);
+  bool is_broken() const;
+  bool is_occupied_by(const PlayerType& p) const;
+  EdgeAreaPtr is_captured_by(const PlayerType& p) const;
+  std::array<int32_t, kPlayerTypeCount> score() const;
 
 private:
-  AdjaceEdges get_adjace_edges();
+  AdjaceEdges get_adjace_edges() const;
 };
 
 class EdgeArea : public Area
