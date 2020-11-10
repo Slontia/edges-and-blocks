@@ -12,6 +12,7 @@
 #include <thread>
 #include <QThread>
 #include <QDir>
+#include <QCloseEvent>
 
 ClientGUI::ClientGUI(QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>()), select_manager_(std::make_unique<MovingSelectManager>())
@@ -42,10 +43,10 @@ ClientGUI::ClientGUI(QWidget *parent)
     palette.setBrush(backgroundRole(), QBrush(pixmap));
     setPalette(palette);
 
-    //QMenu *game_menu = menuBar()->addMenu(tr("Game"));
-    //QAction *new_game_action = new QAction(tr("New Game"));
-    //game_menu->addAction(new_game_action);
-    //connect(new_game_action, SIGNAL(clicked()), this, SLOT(show_new_game_widget()));
+    QMenu *game_menu = menuBar()->addMenu(tr("Game"));
+    QAction *new_game_action = new QAction(tr("New Game"));
+    game_menu->addAction(new_game_action);
+    connect(new_game_action, SIGNAL(triggered()), this, SLOT(start_new_game()));
 }
 
 void ClientGUI::EdgeButtonEvent()
@@ -139,9 +140,14 @@ void ClientGUI::reset_game_variety(const GameVariety& game_var)
   game_info_->refresh_occu_block_count();
 }
 
-void ClientGUI::show_new_game_widget()
+void ClientGUI::start_new_game()
 {
-  (static_cast<NewGameWidget*>(parentWidget()))->show();
+  QApplication::beep();
+  if (QMessageBox::question(this, "New Game", "Quit and start a new game?") == QMessageBox::Yes)
+  {
+		parentWidget()->show();
+		close();
+  }
 }
 
 void ClientGUI::set_act_enable(bool enable)
@@ -161,7 +167,7 @@ void ClientGUI::judge_over()
   }
 }
 
-ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
+ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>&& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
 {
   if (is_offen)
   {
@@ -172,6 +178,12 @@ ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, 
     board_->set_hover_color(DEFEN_PLAYER);
     receive_and_process_request_async();
   }
+}
+
+void ClientGUINetwork::closeEvent(QCloseEvent* event)
+{
+  client_ = nullptr;
+  event->accept();
 }
 
 void ClientGUINetwork::receive_and_process_request_async()

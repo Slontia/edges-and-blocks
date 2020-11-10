@@ -36,7 +36,7 @@ public slots:
   void EdgeButtonEvent();
   virtual void PassButtonEvent();
   virtual void RetractButtonEvent();
-  virtual void show_new_game_widget();
+  virtual void start_new_game();
   
 protected:
   std::unique_ptr<MovingSelectManager> select_manager_;
@@ -69,7 +69,7 @@ class ClientGUINetwork : public ClientGUI
   Q_OBJECT
 
 public:
-  ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>& client, const bool& is_offen, QWidget *parent = Q_NULLPTR);
+  ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>&& client, const bool& is_offen, QWidget *parent = Q_NULLPTR);
 
 public slots:
   virtual void PassButtonEvent();
@@ -77,6 +77,7 @@ public slots:
 
 protected:
   virtual bool try_act(const EdgeButton* target_edge);
+  virtual void closeEvent(QCloseEvent* event) override;
 
 private:
   std::unique_ptr<ClientAsyncWrapper> client_;

@@ -52,7 +52,7 @@ NewGameWidget::NewGameWidget(QWidget *parent) : QMainWindow(parent), client_(nul
 
 void NewGameWidget::open_client_gui_local()
 {
-  open_client_gui(std::make_shared<ClientGUI>());
+  open_client_gui(std::make_shared<ClientGUI>(this));
 }
 
 void NewGameWidget::wait_for_open_client_gui_network()
@@ -65,7 +65,7 @@ void NewGameWidget::wait_for_open_client_gui_network()
     client_->wait_for_game_start_async([&](bool is_offen)
     {
       /* We use shared_ptr instead of unique_ptr to support polymorphic. */
-      auto client_gui = std::make_shared<ClientGUINetwork>(client_, is_offen);
+      auto client_gui = std::make_shared<ClientGUINetwork>(std::move(client_), is_offen, this);
       open_client_gui(std::dynamic_pointer_cast<ClientGUI>(client_gui));
     });
     WritePrivateProfileString(TEXT("Server"), TEXT("ip"), ip_edit_->text().toStdWString().c_str(), TEXT(".\\config.ini"));
@@ -87,13 +87,11 @@ void NewGameWidget::cancel_client_gui_network()
 
 void NewGameWidget::open_client_gui(std::shared_ptr<ClientGUI>& client_gui)
 {
-  if (client_gui_)
-  {
-    client_gui->close();
-  }
+  assert(!client_gui_);
   client_gui_ = std::move(client_gui);
   client_gui_->show();
   hide();
+  network_allow_new_game();
 }
 
 void NewGameWidget::network_forbidden_new_game()
