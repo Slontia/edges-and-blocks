@@ -7,15 +7,24 @@
 #include <optional>
 #include <array>
 
+#define ADD_OPTION(type, name, default_value)\
+type name##_ = default_value;\
+template <typename type>\
+GameOptions& set_##name(type&& name) { name##_ == name; return *this; }
+
+struct GameOptions
+{
+  ADD_OPTION(unsigned int, side_len, 4)
+  ADD_OPTION(unsigned int, winner_block_occu_count, 5)
+  ADD_OPTION(unsigned int, init_offen_edge_own_count, 6)
+  ADD_OPTION(unsigned int, init_defen_edge_own_count, 6)
+};
+
 class Game
 {
 public:
-  static constexpr unsigned int kWinnerBlockOccuCount = 5;
-  static constexpr unsigned int kInitOffenEdgeOwnCount = 6;
-  static constexpr unsigned int kInitDefenEdgeOwnCount = 6;
-  static constexpr unsigned int kBoardSideLen = 8;
   static PlayerType get_oppo_player(const PlayerType& p);
-  Game();
+  Game(const GameOptions& options);
   Game(const Game&) = default;
   ~Game();
   GameVariety Place(const AreaType& edge_type, const Coordinate& pos, const PlayerType& p);
@@ -27,8 +36,11 @@ public:
   const std::array<int, kPlayerTypeCount - 1>& get_edge_own_counts() const { return edge_own_counts_; }
   const std::optional<PlayerType>& get_winner() const { return winner_; }
   const Board& get_board() const { return board_; }
+  int32_t score(const PlayerType& p) const;
+  const GameOptions& options() const { return options_; }
 
 private:
+  const GameOptions options_;
   Board board_;
   bool is_offen_turn_;
   std::optional<PlayerType> winner_;

@@ -26,8 +26,8 @@ void IntQLCDNumber::add_value(const int& value)
 
 GameInfo::GameInfo(QWidget* parent, const QPoint& location, const Game& game) : 
   QWidget(parent), game_(game),
-  offen_own_edge_count_(this, Qt::black, QPoint(0, 20), Game::kInitOffenEdgeOwnCount),
-  defen_own_edge_count_(this, Qt::red, QPoint(0, 100), Game::kInitDefenEdgeOwnCount),
+  offen_own_edge_count_(this, Qt::black, QPoint(0, 20), game.options().init_offen_edge_own_count_),
+  defen_own_edge_count_(this, Qt::red, QPoint(0, 100), game.options().init_defen_edge_own_count_),
   offen_occu_block_count_(this, Qt::black, QPoint(100, 20), 0),
   defen_occu_block_count_(this, Qt::red, QPoint(100, 100), 0)
 {

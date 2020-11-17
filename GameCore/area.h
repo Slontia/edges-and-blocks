@@ -40,7 +40,7 @@ public:
   bool is_broken() const;
   bool is_occupied_by(const PlayerType& p) const;
   EdgeAreaPtr is_captured_by(const PlayerType& p) const;
-  std::array<int32_t, kPlayerTypeCount> score() const;
+  std::pair<int32_t, int32_t> score() const;
 
 private:
   AdjaceEdges get_adjace_edges() const;

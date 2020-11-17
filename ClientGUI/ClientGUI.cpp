@@ -14,8 +14,8 @@
 #include <QDir>
 #include <QCloseEvent>
 
-ClientGUI::ClientGUI(QWidget *parent)
-    : QMainWindow(parent), game_(std::make_unique<Game>()), select_manager_(std::make_unique<MovingSelectManager>())
+ClientGUI::ClientGUI(const GameOptions& options, QWidget *parent)
+    : QMainWindow(parent), game_(std::make_unique<Game>(options)), select_manager_(std::make_unique<MovingSelectManager>())
 {
     ui.setupUi(this);
     setFixedSize(kWindowSize);
@@ -25,7 +25,7 @@ ClientGUI::ClientGUI(QWidget *parent)
     turning_switcher_ = new TurningSwitcher(this, kTurningLocation);
     functions_ = new GameFunctions(this, kFunctionsLocation);
     game_info_ = new GameInfo(this, kGameInfoLocation, *game_);
-    board_ = new BoardWidget(this, kBoardLocation);
+    board_ = new BoardWidget(options.side_len_, kBoardLocation, this);
     board_->set_hover_color(OFFEN_PLAYER);
 
     notification_ = new QTextEdit(this);
@@ -166,7 +166,8 @@ void ClientGUI::judge_over()
   }
 }
 
-ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>&& client, const bool& is_offen, QWidget *parent) : client_(std::move(client)), ClientGUI(parent)
+ClientGUINetwork::ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>&& client, const bool& is_offen, QWidget *parent)
+  : client_(std::move(client)), ClientGUI(GameOptions(),parent)
 {
   if (is_offen)
   {
@@ -339,8 +340,8 @@ void ClientGUINetwork::lost_connection()
 	set_act_enable(false);
 }
 
-ClientGUICom::ClientGUICom(const bool is_offen, const uint32_t level, QWidget* parent)
-  : is_offen_(is_offen), level_(level)
+ClientGUICom::ClientGUICom(const GameOptions& options, const bool is_offen, const uint32_t level, QWidget* parent)
+  : is_offen_(is_offen), level_(level), ClientGUI(options, parent)
 {
   if (is_offen)
   {

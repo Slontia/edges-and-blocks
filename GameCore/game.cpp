@@ -4,10 +4,11 @@
 #include <cassert>
 #include <functional>
 
-Game::Game() : board_(kBoardSideLen), winner_(std::nullopt), is_offen_turn_(true)
+Game::Game(const GameOptions& options)
+  : options_(options), board_(options_.side_len_), winner_(std::nullopt), is_offen_turn_(true)
 {
-  edge_own_counts_[OFFEN_PLAYER] = kInitOffenEdgeOwnCount;
-  edge_own_counts_[DEFEN_PLAYER] = kInitDefenEdgeOwnCount;
+  edge_own_counts_[OFFEN_PLAYER] = options_.init_offen_edge_own_count_;
+  edge_own_counts_[DEFEN_PLAYER] = options_.init_defen_edge_own_count_;
 }
 
 Game::~Game() {}
@@ -151,9 +152,9 @@ void Game::judge_over()
   assert(winner_.has_value() == false);
   int offen_count = board_.get_block_occu_counts()[OFFEN_PLAYER];
   int defen_count = board_.get_block_occu_counts()[DEFEN_PLAYER];
-  if (offen_count >= kWinnerBlockOccuCount && offen_count > defen_count)
+  if (offen_count >= options_.winner_block_occu_count_ && offen_count > defen_count)
     winner_.emplace(OFFEN_PLAYER);
-  else if (defen_count >= kWinnerBlockOccuCount && defen_count > offen_count)
+  else if (defen_count >= options_.winner_block_occu_count_ && defen_count > offen_count)
     winner_.emplace(DEFEN_PLAYER);
   else if (board_.get_edge_occu_counts()[NO_PLAYER] == 0)
     winner_.emplace(NO_PLAYER);
@@ -189,4 +190,15 @@ PlayerType Game::get_oppo_player(const PlayerType& p)
     return DEFEN_PLAYER;
   assert(false);
   return NO_PLAYER;
+}
+
+int32_t Game::score(const PlayerType& p) const
+{
+  assert(p != NO_PLAYER);
+  auto scores = board_.score();
+  // final score = sum of block score * number of blocks opponent need to occpy
+  std::get<0>(scores) *= options_.winner_block_occu_count_ - board_.get_block_occu_counts()[1];
+  std::get<1>(scores) *= options_.winner_block_occu_count_ - board_.get_block_occu_counts()[0];
+  return p == DEFEN_PLAYER ? std::get<DEFEN_PLAYER>(scores) - std::get<OFFEN_PLAYER>(scores) :
+                             std::get<OFFEN_PLAYER>(scores) - std::get<DEFEN_PLAYER>(scores);
 }

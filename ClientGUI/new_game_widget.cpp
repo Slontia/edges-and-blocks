@@ -20,9 +20,10 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   com_game_rbtn_(new QRadioButton("com_game", this)),
   network_game_rbtn_(new QRadioButton("network_game", this)),
   ip_edit_(new QLineEdit(this)),
-  port_edit_(new QLineEdit(this))
+  port_edit_(new QLineEdit(this)),
+  side_len_edit_(new QLineEdit(this))
 {
-  setFixedSize(230, 135);
+  setFixedSize(230, 160);
   setWindowTitle("New Game");
   setWindowIcon(QIcon(QDir::currentPath() + RESOURCE_ICON));
 
@@ -43,9 +44,11 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   QObject::connect(network_game_rbtn_, SIGNAL(clicked(bool)), this, SLOT(refresh_enable_options()));
   network_game_rbtn_->move(115, 45);
 
+  auto ip_label = new QLabel("IP Address:", this);
+  ip_label->move(20, 70);
+  ip_label->setFixedSize(60, 20);
   TCHAR ip_conf_buf[20] = { 0 };
   GetPrivateProfileString(TEXT("Server"), TEXT("ip"), TEXT("127.0.0.1\0"), ip_conf_buf, 20, config_file_name);
-  (new QLabel("IP Address:",this))->move(20, 70);
   QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
   QRegExp ipRegex("^" + ipRange + "\\." + ipRange + "\\." + ipRange + "\\." + ipRange + "$");
   ip_edit_->setValidator(new QRegExpValidator(ipRegex, ip_edit_));
@@ -53,27 +56,42 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   ip_edit_->move(100, 75);
   ip_edit_->setFixedSize(110, 20);
 
+  auto port_label = new QLabel("Port:", this);
+  port_label->move(20, 95);
+  port_label->setFixedSize(60, 20);
   TCHAR port_conf_buf[20] = { 0 };
   GetPrivateProfileString(TEXT("Server"), TEXT("port"), TEXT("9810\0"), port_conf_buf, 20, config_file_name);
-  (new QLabel("Port:", this))->move(20, 95);
   port_edit_->setValidator(new QIntValidator(port_edit_));
   port_edit_->setText(QString::fromWCharArray(port_conf_buf, wcslen(port_conf_buf)));
   port_edit_->move(100, 100);
   port_edit_->setFixedSize(40, 20);
   port_edit_->setMaxLength(5);
 
+  auto side_len_label = new QLabel("Side Len:", this);
+  side_len_label->move(20, 120);
+  side_len_label->setFixedSize(60, 20);
+  TCHAR side_len_conf_buf[2] = { '4' };
+  side_len_edit_->setValidator(new QIntValidator(3, 8, side_len_edit_));
+  side_len_edit_->setText(QString::fromWCharArray(side_len_conf_buf, wcslen(side_len_conf_buf)));
+  side_len_edit_->move(100, 125);
+  side_len_edit_->setFixedSize(20, 20);
+  side_len_edit_->setMaxLength(1);
+
   refresh_enable_options();
 }
 
 void NewGameWidget::start_game()
 {
+  GameOptions options;
+  options.side_len_ = side_len_edit_->text().toInt();
   switch (game_type_gbtn_->checkedId())
   {
   case LOCAL_GAME:
-    open_client_gui(std::make_shared<ClientGUI>(this));
+    open_client_gui(std::make_shared<ClientGUI>(options, this));
     break;
   case COM_GAME:
-    open_client_gui(std::static_pointer_cast<ClientGUI>(std::make_shared<ClientGUICom>(false, 1, this)));
+    open_client_gui(std::static_pointer_cast<ClientGUI>(
+      std::make_shared<ClientGUICom>(options, false, 1, this)));
     break;
   case NETWORK_GAME:
     wait_for_open_client_gui_network();
@@ -125,11 +143,12 @@ void NewGameWidget::network_forbidden_new_game()
   start_game_btn_->disconnect();
   QObject::connect(start_game_btn_, SIGNAL(clicked()), this, SLOT(cancel_client_gui_network()));
   start_game_btn_->setText("Cancel");
-  ip_edit_->setEnabled(false);
-  port_edit_->setEnabled(false);
   local_game_rbtn_->setEnabled(false);
   com_game_rbtn_->setEnabled(false);
   network_game_rbtn_->setEnabled(false);
+  ip_edit_->setEnabled(false);
+  port_edit_->setEnabled(false);
+  side_len_edit_->setDisabled(false);
 }
 
 void NewGameWidget::enable_new_game()
@@ -149,5 +168,6 @@ void NewGameWidget::refresh_enable_options()
   const auto current_game_type = game_type_gbtn_->checkedId();
   ip_edit_->setEnabled(current_game_type == NETWORK_GAME);
   port_edit_->setEnabled(current_game_type == NETWORK_GAME);
+  side_len_edit_->setEnabled(current_game_type != NETWORK_GAME);
 }
 

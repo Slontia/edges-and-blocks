@@ -45,7 +45,7 @@ AreaPtr Board::get_area(const Coordinate& pos, const AreaType& type)
 
 AreaPtr Board::get_area_safe(const Coordinate& pos, const AreaType& type)
 {
-  return get_area(Coordinate(pos.x_ % side_len_, pos.y_ % side_len_), type);
+  return get_area(Coordinate((pos.x_ + side_len_) % side_len_, (pos.y_ + side_len_) % side_len_), type);
 }
 
 BlockAreaPtr Board::get_block(const Coordinate& pos)
@@ -67,7 +67,7 @@ const AreaPtr Board::get_area(const Coordinate& pos, const AreaType& type) const
 
 const AreaPtr Board::get_area_safe(const Coordinate& pos, const AreaType& type) const
 {
-  return get_area(Coordinate(pos.x_ % side_len_, pos.y_ % side_len_), type);
+  return get_area(Coordinate((pos.x_ + side_len_) % side_len_, (pos.y_ + side_len_) % side_len_), type);
 }
 
 const BlockAreaPtr Board::get_block(const Coordinate& pos) const
@@ -102,20 +102,17 @@ void Board::reset_game_variety(const GameVariety& game_var)
   }
 }
 
-int32_t Board::score(const PlayerType& p) const
+std::pair<int32_t, int32_t> Board::score() const
 {
-  std::array<int32_t, 2> scores{ 0 };
+  std::pair<int32_t, int32_t> scores{ 0, 0 };
   for (const auto& blocks : areas_[BLOCK_AREA])
   {
     for (const auto& block : blocks)
     {
       const auto& block_scores = std::dynamic_pointer_cast<BlockArea>(block)->score();
-      scores[0] += block_scores[0];
-      scores[1] += block_scores[1];
+      std::get<0>(scores) += std::get<0>(block_scores);
+      std::get<1>(scores) += std::get<1>(block_scores);
     }
   }
-  // final score = sum of block score * number of blocks opponent need to occpy
-  scores[0] *= Game::kWinnerBlockOccuCount - block_occu_counts_[1];
-  scores[1] *= Game::kWinnerBlockOccuCount - block_occu_counts_[0];
-  return scores[p] - scores[Game::get_oppo_player(p)];
+  return scores;
 }

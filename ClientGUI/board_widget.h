@@ -66,16 +66,17 @@ private:
 
 class BoardWidget : public QWidget
 {
-private:
-  const int kSleepMs = 200;
-  std::array<std::array<std::array<AreaButton*, Game::kBoardSideLen>, Game::kBoardSideLen>, kAreaTypeCount> buttons_;
-
 public:
-  BoardWidget(QWidget* parent, const QPoint& location);
+  BoardWidget(unsigned int side_len, const QPoint& location, QWidget* parent = Q_NULLPTR);
   void impl_game_variety(const GameVariety& game_var);
   void reset_game_variety(const GameVariety& game_var);
   void set_enable(bool enable);
   void set_hover_color(const PlayerType& cur_player);
+
+private:
+  static constexpr int kSleepMs = 200;
+  const unsigned int side_len_;
+  std::array<std::vector<std::vector<AreaButton*>>, kAreaTypeCount> buttons_;
 };
 
 extern HMODULE hModule;

@@ -24,13 +24,14 @@ class GameFunctions;
 class EdgeButton;
 class AreaButton;
 class BoardWidget;
+class GameOptions;
 
 class ClientGUI : public QMainWindow
 {
   Q_OBJECT
 
 public:
-  ClientGUI(QWidget *parent = Q_NULLPTR);
+  ClientGUI(const GameOptions& options, QWidget *parent = Q_NULLPTR);
 
 public slots:
   void EdgeButtonEvent();
@@ -69,6 +70,7 @@ class ClientGUINetwork : public ClientGUI
   Q_OBJECT
 
 public:
+  static constexpr unsigned int kSideLen = 4;
   ClientGUINetwork(std::unique_ptr<ClientAsyncWrapper>&& client, const bool& is_offen, QWidget* parent = Q_NULLPTR);
 
 public slots:
@@ -92,7 +94,7 @@ class ClientGUICom : public ClientGUI
   Q_OBJECT
 
 public:
-  ClientGUICom(const bool is_offen, const uint32_t level, QWidget* parent = Q_NULLPTR);
+  ClientGUICom(const GameOptions& options, const bool is_offen, const uint32_t level, QWidget* parent = Q_NULLPTR);
 
 public slots:
   virtual void RetractButtonEvent();
@@ -115,7 +117,9 @@ private:
     {
       action(); // place or move
       // act_best_choise return the opponent's score, our score is the negative score of the opponent's score
-      const int32_t score = level > 0 ? -act_best_choise<false>(Game::get_oppo_player(p), level - 1) : game_->get_board().score(p);
+      const int32_t score = game_->is_over() ? INT32_MAX :
+                            level > 0 ? -act_best_choise<false>(Game::get_oppo_player(p), level - 1) :
+                            game_->score(p);
       if (score > best_score)
       {
         if constexpr (return_action)

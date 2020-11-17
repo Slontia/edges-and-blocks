@@ -106,21 +106,24 @@ void EdgeButton::set_player(const PlayerType& old_player, const PlayerType& new_
   }
 }
 
-BoardWidget::BoardWidget(QWidget* parent, const QPoint& location) : QWidget(parent)
+BoardWidget::BoardWidget(const unsigned int side_len, const QPoint& location, QWidget* parent)
+  : side_len_(side_len), QWidget(parent)
 {
-  const int& side_unit_num = Game::kBoardSideLen;
-  for (int x = 0; x < side_unit_num; ++x)
+  for (int x = 0; x < side_len_; ++x)
   {
-    for (int y = 0; y < side_unit_num; ++y)
+    buttons_[BLOCK_AREA].emplace_back();
+    buttons_[HORI_EDGE_AREA].emplace_back();
+    buttons_[VERT_EDGE_AREA].emplace_back();
+    for (int y = 0; y < side_len_; ++y)
     {
       const AreaPos pos(x, y);
-      buttons_[BLOCK_AREA][x][y] = new BlockButton(pos, this);
-      buttons_[HORI_EDGE_AREA][x][y] = new EdgeButton(side_unit_num, pos, false, this);
-      buttons_[VERT_EDGE_AREA][x][y] = new EdgeButton(side_unit_num, pos, true, this);
+      buttons_[BLOCK_AREA][x].emplace_back(new BlockButton(pos, this));
+      buttons_[HORI_EDGE_AREA][x].emplace_back(new EdgeButton(side_len_, pos, false, this));
+      buttons_[VERT_EDGE_AREA][x].emplace_back(new EdgeButton(side_len_, pos, true, this));
     }
   }
   move(location);
-  resize(QSize(kUnitWidth, kUnitWidth) * Game::kBoardSideLen + QSize(kGapWidth + kEdgeWidth / 2, kGapWidth + kEdgeWidth / 2));
+  resize(QSize(kUnitWidth, kUnitWidth) * side_len_ + QSize(kGapWidth + kEdgeWidth / 2, kGapWidth + kEdgeWidth / 2));
   play_sound_as_resource(START_GAME_WAVE);
 }
 

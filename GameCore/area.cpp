@@ -77,7 +77,7 @@ bool BlockArea::is_occupied_by(const PlayerType& p) const
   return true;
 }
 
-std::array<int32_t, kPlayerTypeCount> BlockArea::score() const
+std::pair<int32_t, int32_t> BlockArea::score() const
 {
   static const int32_t kScoreTable[kEdgeCountAdjaceBlock + 1][kEdgeCountAdjaceBlock + 1] =
   {
@@ -87,13 +87,20 @@ std::array<int32_t, kPlayerTypeCount> BlockArea::score() const
     {4 ,1 ,0 ,0 ,0 },
     {4 ,0 ,0 ,0 ,0 }
   };
-  std::array<int32_t, 2> edge_counts = { 0 };
+  std::pair<int32_t, int32_t> edge_counts = { 0, 0 };
   for (const auto& edge : get_adjace_edges())
   {
-    if (const PlayerType p = edge->get_player(); p != NO_PLAYER) { ++edge_counts[p]; }
+    if (const PlayerType p = edge->get_player(); p == OFFEN_PLAYER)
+    {
+      ++std::get<OFFEN_PLAYER>(edge_counts);
+    }
+    else if (p == DEFEN_PLAYER)
+    {
+      ++std::get<DEFEN_PLAYER>(edge_counts);
+    }
   }
-  const auto score = [&edge_counts](int player) { return kScoreTable[edge_counts[player]][edge_counts[1 - player]]; };
-  return { score(0), score(1) };
+  return { kScoreTable[std::get<0>(edge_counts)][std::get<1>(edge_counts)],
+           kScoreTable[std::get<1>(edge_counts)][std::get<0>(edge_counts)] };
 }
 
 EdgeAreaPtr BlockArea::is_captured_by(const PlayerType& p) const
