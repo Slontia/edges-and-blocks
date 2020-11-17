@@ -108,9 +108,8 @@ void ClientGUI::RetractButtonEvent()
   notification_->clear();
   try
   {
-    GameVariety game_var = game_->Retract();
-    reset_game_variety(game_var);
-    set_act_enable(true);
+    reset_game_variety(game_->Retract());
+    set_act_enable(true); // act may has been disabled when game over
     if (game_->get_round() == 0) { functions_->retract_->setEnabled(false); }
     switch_player();
   }
@@ -340,3 +339,54 @@ void ClientGUINetwork::lost_connection()
 	set_act_enable(false);
 }
 
+ClientGUICom::ClientGUICom(const bool is_offen, const uint32_t level, QWidget* parent)
+  : is_offen_(is_offen), level_(level)
+{
+  if (is_offen)
+  {
+    board_->set_hover_color(OFFEN_PLAYER);
+  }
+  else
+  {
+    const auto side_len = game_->get_board().side_len_;
+    // com place an edge at center first
+    impl_game_variety(game_->Place(AreaType::HORI_EDGE_AREA, Coordinate(side_len / 2, side_len / 2), OFFEN_PLAYER));
+    board_->set_hover_color(DEFEN_PLAYER);
+    turning_switcher_->switch_turn();
+  }
+}
+
+void ClientGUICom::com_act()
+{
+  set_act_enable(false);
+  for (auto& action : act_best_choise<true>(is_offen_ ? DEFEN_PLAYER : OFFEN_PLAYER, level_)) // opponent player type
+  {
+    impl_game_variety(action());
+  }
+  set_act_enable(true);
+}
+
+bool ClientGUICom::try_act(const EdgeButton* target_edge)
+{
+  if (!ClientGUI::try_act(target_edge)) { return false; }
+  if (!game_->is_over())
+  { com_act(); } // TODO: consider retract
+  return true;
+}
+
+void ClientGUICom::RetractButtonEvent()
+{
+  notification_->clear();
+  try
+  {
+    reset_game_variety(game_->Retract());
+    reset_game_variety(game_->Retract());
+    set_act_enable(true);
+    // retract two actions each time
+    if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }
+  }
+  catch (const game_exception& e)
+  {
+    notification_->setText(e.what());
+  }
+}

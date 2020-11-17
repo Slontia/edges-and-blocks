@@ -87,12 +87,13 @@ std::array<int32_t, kPlayerTypeCount> BlockArea::score() const
     {4 ,1 ,0 ,0 ,0 },
     {4 ,0 ,0 ,0 ,0 }
   };
-  std::array<int32_t, kPlayerTypeCount> scores = { 0 };
+  std::array<int32_t, 2> edge_counts = { 0 };
   for (const auto& edge : get_adjace_edges())
   {
-    if (const PlayerType p = edge->get_player(); p != NO_PLAYER) { ++scores[p]; }
+    if (const PlayerType p = edge->get_player(); p != NO_PLAYER) { ++edge_counts[p]; }
   }
-  return { kScoreTable[0][1], kScoreTable[1][0] };
+  const auto score = [&edge_counts](int player) { return kScoreTable[edge_counts[player]][edge_counts[1 - player]]; };
+  return { score(0), score(1) };
 }
 
 EdgeAreaPtr BlockArea::is_captured_by(const PlayerType& p) const
@@ -120,7 +121,7 @@ EdgeArea::EdgeArea(Board& board, const Coordinate& pos, const AreaType& edge_typ
 
 EdgeArea::~EdgeArea() {}
 
-EdgeArea::AdjaceBlocks EdgeArea::get_adjace_blocks()
+EdgeArea::AdjaceBlocks EdgeArea::get_adjace_blocks() const
 {
   auto get_block = [this](const unsigned int& x, const unsigned int& y)
   {
@@ -137,7 +138,7 @@ EdgeArea::AdjaceBlocks EdgeArea::get_adjace_blocks()
   };
 }
 
-EdgeArea::AdjaceEdges EdgeArea::get_adjace_edges()
+EdgeArea::AdjaceEdges EdgeArea::get_adjace_edges() const
 {
   auto get_edge = [this](const unsigned int& x, const unsigned int& y, const AreaType& type)
   {
@@ -163,7 +164,7 @@ EdgeArea::AdjaceEdges EdgeArea::get_adjace_edges()
   };
 }
 
-bool EdgeArea::is_adjace(const EdgeArea& edge)
+bool EdgeArea::is_adjace(const EdgeArea& edge) const
 {
   for (const auto& adjaced_edge : get_adjace_edges())
   {
@@ -174,7 +175,7 @@ bool EdgeArea::is_adjace(const EdgeArea& edge)
 
 /* Assume block is one of the adjacent blocks.
 */
-BlockAreaPtr EdgeArea::get_another_block(const BlockArea& block)
+BlockAreaPtr EdgeArea::get_another_block(const BlockArea& block) const
 {
   for (auto& adjaced_block : get_adjace_blocks())
   {

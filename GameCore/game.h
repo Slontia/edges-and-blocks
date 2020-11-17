@@ -16,6 +16,7 @@ public:
   static constexpr unsigned int kBoardSideLen = 8;
   static PlayerType get_oppo_player(const PlayerType& p);
   Game();
+  Game(const Game&) = default;
   ~Game();
   GameVariety Place(const AreaType& edge_type, const Coordinate& pos, const PlayerType& p);
   GameVariety Move(const AreaType& old_edge_type, const Coordinate& old_pos, const AreaType& new_edge_type, const Coordinate& new_pos, const PlayerType& p);

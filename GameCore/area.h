@@ -53,10 +53,10 @@ public:
   typedef std::array<EdgeAreaPtr, kEdgeCountAdjaceEdge> AdjaceEdges;
   EdgeArea(Board& board, const Coordinate& pos, const AreaType& edge_type, std::array<int, kPlayerTypeCount>& player_counts);
   virtual ~EdgeArea();
-  AdjaceBlocks get_adjace_blocks();
-  AdjaceEdges get_adjace_edges();
-  BlockAreaPtr get_another_block(const BlockArea& block);
-  bool is_adjace(const EdgeArea& edge);
+  AdjaceBlocks get_adjace_blocks() const;
+  AdjaceEdges get_adjace_edges() const;
+  BlockAreaPtr get_another_block(const BlockArea& block) const;
+  bool is_adjace(const EdgeArea& edge) const;
 
 private:
   AdjaceBlocks adjace_blocks_;

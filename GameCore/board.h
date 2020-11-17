@@ -14,6 +14,10 @@ public:
   AreaPtr get_area_safe(const Coordinate& pos, const AreaType& edge_type);
   BlockAreaPtr get_block(const Coordinate& pos);
   EdgeAreaPtr get_edge(const Coordinate& pos, const AreaType& edge_type);
+  const AreaPtr get_area(const Coordinate& pos, const AreaType& edge_type) const;
+  const AreaPtr get_area_safe(const Coordinate& pos, const AreaType& edge_type) const;
+  const BlockAreaPtr get_block(const Coordinate& pos) const;
+  const EdgeAreaPtr get_edge(const Coordinate& pos, const AreaType& edge_type) const;
   const OccuCounts& get_block_occu_counts() const;
   const OccuCounts& get_edge_occu_counts() const;
   void reset_game_variety(const GameVariety& game_var);
