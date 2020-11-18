@@ -70,7 +70,7 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   port_edit_->setFixedSize(40, 20);
   port_edit_->setMaxLength(5);
 
-  const auto add_spin_box = [this](const char* const label_str, QSpinBox* spin_box, const QPoint& pos, const int min, const int max)
+  const auto add_spin_box = [this](const char* const label_str, QSpinBox* spin_box, const QPoint& pos, const int min, const int max, const int default_value)
   {
 		auto label = new QLabel(label_str, this);
 		label->move(pos);
@@ -79,12 +79,13 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
 		spin_box->setMaximum(max);
 		spin_box->move(pos.x() + 150, pos.y());
 		spin_box->setFixedSize(40, 20);
+    spin_box->setValue(default_value);
   };
 
-  add_spin_box("Side Length:", side_len_spin_, QPoint(20, 125), 2, 8);
-  add_spin_box("Winner Block Num:", win_blocks_spin_, QPoint(20, 150), 2, 10);
-  add_spin_box("Firsthand Hold Edges:", init_offen_edges_spin_, QPoint(20, 175), 4, 99);
-  add_spin_box("Backhand Hold Edges:", init_defen_edges_spin_, QPoint(20, 200), 4, 99);
+  add_spin_box("Side Length:", side_len_spin_, QPoint(20, 125), 2, 8, 6);
+  add_spin_box("Winner Block Num:", win_blocks_spin_, QPoint(20, 150), 2, 10, 5);
+  add_spin_box("Firsthand Hold Edges:", init_offen_edges_spin_, QPoint(20, 175), 4, 99, 6);
+  add_spin_box("Backhand Hold Edges:", init_defen_edges_spin_, QPoint(20, 200), 4, 99, 6);
 
   refresh_enable_options();
 }

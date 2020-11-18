@@ -341,37 +341,44 @@ void ClientGUINetwork::lost_connection()
 }
 
 ClientGUICom::ClientGUICom(const GameOptions& options, const bool is_offen, const uint32_t level, QWidget* parent)
-  : is_offen_(is_offen), level_(level), ClientGUI(options, parent)
+  : ClientGUI(options, parent), ai_(*game_, is_offen ? DEFEN_PLAYER : OFFEN_PLAYER, level), is_offen_(is_offen)
 {
+	QObject::connect(&ai_, SIGNAL(act_over()), this, SLOT(com_act()));
   if (is_offen)
   {
     board_->set_hover_color(OFFEN_PLAYER);
   }
   else
   {
-    const auto side_len = game_->get_board().side_len_;
-    // com place an edge at center first
-    impl_game_variety(game_->Place(AreaType::HORI_EDGE_AREA, Coordinate(side_len / 2, side_len / 2), OFFEN_PLAYER));
+		set_act_enable(false);
     board_->set_hover_color(DEFEN_PLAYER);
-    turning_switcher_->switch_turn();
+    ai_.act_first_async();
   }
 }
 
 void ClientGUICom::com_act()
 {
-  set_act_enable(false);
-  for (auto& action : act_best_choise<true>(is_offen_ ? DEFEN_PLAYER : OFFEN_PLAYER, level_)) // opponent player type
+  for (auto& action : ai_.best_actions()) // opponent player type
   {
     impl_game_variety(action());
   }
-  set_act_enable(true);
+  if (!game_->is_over())
+  {
+		turning_switcher_->switch_turn();
+		set_act_enable(true);
+  }
+  functions_->retract_->setEnabled(game_->get_round() > 1);
 }
 
 bool ClientGUICom::try_act(const EdgeButton* target_edge)
 {
   if (!ClientGUI::try_act(target_edge)) { return false; }
   if (!game_->is_over())
-  { com_act(); } // TODO: consider retract
+  {
+		set_act_enable(false);
+		turning_switcher_->switch_turn();
+    ai_.act_async();
+  } // TODO: consider retract
   return true;
 }
 
@@ -381,7 +388,15 @@ void ClientGUICom::RetractButtonEvent()
   try
   {
     reset_game_variety(game_->Retract());
-    reset_game_variety(game_->Retract());
+    if (!game_->is_over() || ((turning_switcher_->get_turn() == OFFEN_PLAYER) ^ is_offen_))
+    {
+      // if game is not over or computer has just acted, retract twice
+			reset_game_variety(game_->Retract());
+    }
+    else
+    {
+      turning_switcher_->switch_turn();
+    }
     set_act_enable(true);
     // retract two actions each time
     if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }
