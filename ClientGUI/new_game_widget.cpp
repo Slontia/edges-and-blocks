@@ -21,9 +21,12 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   network_game_rbtn_(new QRadioButton("network_game", this)),
   ip_edit_(new QLineEdit(this)),
   port_edit_(new QLineEdit(this)),
-  side_len_edit_(new QLineEdit(this))
+  side_len_spin_(new QSpinBox(this)),
+  win_blocks_spin_(new QSpinBox(this)),
+  init_offen_edges_spin_(new QSpinBox(this)),
+  init_defen_edges_spin_(new QSpinBox(this))
 {
-  setFixedSize(230, 160);
+  setFixedSize(230, 235);
   setWindowTitle("New Game");
   setWindowIcon(QIcon(QDir::currentPath() + RESOURCE_ICON));
 
@@ -45,8 +48,8 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   network_game_rbtn_->move(115, 45);
 
   auto ip_label = new QLabel("IP Address:", this);
-  ip_label->move(20, 70);
-  ip_label->setFixedSize(60, 20);
+  ip_label->move(20, 75);
+  ip_label->setFixedSize(70, 20);
   TCHAR ip_conf_buf[20] = { 0 };
   GetPrivateProfileString(TEXT("Server"), TEXT("ip"), TEXT("127.0.0.1\0"), ip_conf_buf, 20, config_file_name);
   QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
@@ -57,8 +60,8 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   ip_edit_->setFixedSize(110, 20);
 
   auto port_label = new QLabel("Port:", this);
-  port_label->move(20, 95);
-  port_label->setFixedSize(60, 20);
+  port_label->move(20, 100);
+  port_label->setFixedSize(70, 20);
   TCHAR port_conf_buf[20] = { 0 };
   GetPrivateProfileString(TEXT("Server"), TEXT("port"), TEXT("9810\0"), port_conf_buf, 20, config_file_name);
   port_edit_->setValidator(new QIntValidator(port_edit_));
@@ -67,15 +70,21 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   port_edit_->setFixedSize(40, 20);
   port_edit_->setMaxLength(5);
 
-  auto side_len_label = new QLabel("Side Len:", this);
-  side_len_label->move(20, 120);
-  side_len_label->setFixedSize(60, 20);
-  TCHAR side_len_conf_buf[2] = { '4' };
-  side_len_edit_->setValidator(new QIntValidator(3, 8, side_len_edit_));
-  side_len_edit_->setText(QString::fromWCharArray(side_len_conf_buf, wcslen(side_len_conf_buf)));
-  side_len_edit_->move(100, 125);
-  side_len_edit_->setFixedSize(20, 20);
-  side_len_edit_->setMaxLength(1);
+  const auto add_spin_box = [this](const char* const label_str, QSpinBox* spin_box, const QPoint& pos, const int min, const int max)
+  {
+		auto label = new QLabel(label_str, this);
+		label->move(pos);
+		label->setFixedSize(130, 20);
+		spin_box->setMinimum(min);
+		spin_box->setMaximum(max);
+		spin_box->move(pos.x() + 150, pos.y());
+		spin_box->setFixedSize(40, 20);
+  };
+
+  add_spin_box("Side Length:", side_len_spin_, QPoint(20, 125), 2, 8);
+  add_spin_box("Winner Block Num:", win_blocks_spin_, QPoint(20, 150), 2, 10);
+  add_spin_box("Firsthand Hold Edges:", init_offen_edges_spin_, QPoint(20, 175), 4, 99);
+  add_spin_box("Backhand Hold Edges:", init_defen_edges_spin_, QPoint(20, 200), 4, 99);
 
   refresh_enable_options();
 }
@@ -83,7 +92,10 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
 void NewGameWidget::start_game()
 {
   GameOptions options;
-  options.side_len_ = side_len_edit_->text().toInt();
+  options.side_len_ = side_len_spin_->value();
+  options.winner_block_occu_count_ = win_blocks_spin_->value();
+  options.init_defen_edge_own_count_ = init_defen_edges_spin_->value();
+  options.init_offen_edge_own_count_ = init_offen_edges_spin_->value();
   switch (game_type_gbtn_->checkedId())
   {
   case LOCAL_GAME:
@@ -148,7 +160,10 @@ void NewGameWidget::network_forbidden_new_game()
   network_game_rbtn_->setEnabled(false);
   ip_edit_->setEnabled(false);
   port_edit_->setEnabled(false);
-  side_len_edit_->setDisabled(false);
+  side_len_spin_->setDisabled(false);
+  win_blocks_spin_->setDisabled(false);
+  init_offen_edges_spin_->setDisabled(false);
+  init_defen_edges_spin_->setDisabled(false);
 }
 
 void NewGameWidget::enable_new_game()
@@ -168,6 +183,9 @@ void NewGameWidget::refresh_enable_options()
   const auto current_game_type = game_type_gbtn_->checkedId();
   ip_edit_->setEnabled(current_game_type == NETWORK_GAME);
   port_edit_->setEnabled(current_game_type == NETWORK_GAME);
-  side_len_edit_->setEnabled(current_game_type != NETWORK_GAME);
+  side_len_spin_->setEnabled(current_game_type != NETWORK_GAME);
+  win_blocks_spin_->setEnabled(current_game_type != NETWORK_GAME);
+  init_offen_edges_spin_->setEnabled(current_game_type != NETWORK_GAME);
+  init_defen_edges_spin_->setEnabled(current_game_type != NETWORK_GAME);
 }
 

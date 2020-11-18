@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <QLineEdit>
+#include <QSpinBox>
 #include <memory>
 #include "client.h"
 
@@ -32,7 +33,10 @@ private:
   QAbstractButton* network_game_rbtn_;
   QLineEdit* ip_edit_;
   QLineEdit* port_edit_;
-  QLineEdit* side_len_edit_;
+  QSpinBox* side_len_spin_;
+  QSpinBox* win_blocks_spin_;
+  QSpinBox* init_offen_edges_spin_;
+  QSpinBox* init_defen_edges_spin_;
   void open_client_gui(std::shared_ptr<ClientGUI>& client_gui);
   void network_forbidden_new_game();
   void wait_for_open_client_gui_network();
