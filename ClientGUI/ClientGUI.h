@@ -111,6 +111,6 @@ private:
   virtual void switch_player() override;
 
   AI ai_;
-  const bool is_offen_;
+  const PlayerType p_;
 };
 

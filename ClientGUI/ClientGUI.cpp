@@ -341,7 +341,7 @@ void ClientGUINetwork::lost_connection()
 }
 
 ClientGUICom::ClientGUICom(const GameOptions& options, const bool is_offen, const uint32_t level, QWidget* parent)
-  : ClientGUI(options, parent), ai_(*game_, is_offen ? DEFEN_PLAYER : OFFEN_PLAYER, level), is_offen_(is_offen)
+  : ClientGUI(options, parent), ai_(*game_, is_offen ? DEFEN_PLAYER : OFFEN_PLAYER, level), p_(is_offen ? OFFEN_PLAYER : DEFEN_PLAYER)
 {
   QObject::connect(&ai_, SIGNAL(act_over()), this, SLOT(com_act()));
   if (is_offen)
@@ -364,6 +364,7 @@ void ClientGUICom::com_act()
   }
   if (!game_->is_over())
   {
+    board_->set_hover_color(p_);
     set_act_enable(true);
   }
   switch_player();
@@ -406,7 +407,7 @@ void ClientGUICom::RetractButtonEvent()
   notification_->clear();
   try
   {
-    if (!(turning_switcher_->get_turn() == OFFEN_PLAYER) ^ is_offen_)
+    if (turning_switcher_->get_turn() == p_)
     {
       // if game is not over or computer has just acted, retract twice
       reset_game_variety(game_->Retract());
@@ -416,6 +417,7 @@ void ClientGUICom::RetractButtonEvent()
       turning_switcher_->switch_turn();
     }
     reset_game_variety(game_->Retract());
+    board_->set_hover_color(p_);
     set_act_enable(true);
     // retract two actions each time
     if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }

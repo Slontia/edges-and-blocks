@@ -194,7 +194,6 @@ void BoardWidget::set_hover_color(const PlayerType& cur_player)
   };
   set_edge_buttons_enable(HORI_EDGE_AREA);
   set_edge_buttons_enable(VERT_EDGE_AREA);
-  
 }
 
 void BoardWidget::set_enable(bool enable)
