@@ -1,4 +1,15 @@
-#pragma once
+#ifdef ADD_OPTION
+
+ADD_OPTION(unsigned int, side_len, 4)
+ADD_OPTION(unsigned int, winner_block_occu_count, 5)
+ADD_OPTION(unsigned int, init_offen_edge_own_count, 6)
+ADD_OPTION(unsigned int, init_defen_edge_own_count, 6)
+
+#endif
+
+#ifndef GAME_H
+#define GAME_H
+
 #include "GameCore.h"
 #include "board.h"
 #include "area.h"
@@ -6,18 +17,25 @@
 #include <functional>
 #include <optional>
 #include <array>
-
-#define ADD_OPTION(type, name, default_value)\
-type name##_ = default_value;\
-template <typename type>\
-GameOptions& set_##name(type&& name) { name##_ == name; return *this; }
+#include <string>
 
 struct GameOptions
 {
-  ADD_OPTION(unsigned int, side_len, 4)
-  ADD_OPTION(unsigned int, winner_block_occu_count, 5)
-  ADD_OPTION(unsigned int, init_offen_edge_own_count, 6)
-  ADD_OPTION(unsigned int, init_defen_edge_own_count, 6)
+#define ADD_OPTION(type, name, default_value)\
+	type name##_ = default_value;\
+	template <typename type>\
+	GameOptions& set_##name(type&& name) { name##_ == name; return *this; }
+#include "game.h"
+#undef ADD_OPTION
+
+  std::string to_string() const
+  {
+    return std::string()
+#define ADD_OPTION(type, name, default_value) + #name + "=" + std::to_string(name##_) + "; "
+#include "game.h"
+#undef ADD_OPTION
+    ;
+  }
 };
 
 class Game
@@ -53,3 +71,5 @@ private:
   void supply_edges(GameVariety& var, const Board::OccuCounts& occu_counts_record);
   GameVariety change_and_refresh(std::function<void(GameVariety&)> init_variety, EdgeArea& refresh_edge, const PlayerType& p);
 };
+
+#endif

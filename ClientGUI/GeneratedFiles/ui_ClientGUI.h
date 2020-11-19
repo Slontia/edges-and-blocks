@@ -16,6 +16,7 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QStatusBar>
 #include <QtWidgets/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -25,6 +26,7 @@ class Ui_ClientGUIClass
 public:
     QMenuBar *menuBar;
     QWidget *centralWidget;
+    QStatusBar *statusBar;
 
     void setupUi(QMainWindow *ClientGUIClass)
     {
@@ -37,6 +39,9 @@ public:
         centralWidget = new QWidget(ClientGUIClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         ClientGUIClass->setCentralWidget(centralWidget);
+        statusBar = new QStatusBar(ClientGUIClass);
+        statusBar->setObjectName(QStringLiteral("statusBar"));
+        ClientGUIClass->setStatusBar(statusBar);
 
         retranslateUi(ClientGUIClass);
 

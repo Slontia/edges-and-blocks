@@ -13,6 +13,7 @@
 #include <QThread>
 #include <QDir>
 #include <QCloseEvent>
+#include <QLabel>
 
 ClientGUI::ClientGUI(const GameOptions& options, QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>(options)), select_manager_(std::make_unique<MovingSelectManager>())
@@ -47,6 +48,8 @@ ClientGUI::ClientGUI(const GameOptions& options, QWidget *parent)
     QAction *new_game_action = new QAction(tr("New Game"));
     game_menu->addAction(new_game_action);
     connect(new_game_action, SIGNAL(triggered()), this, SLOT(start_new_game()));
+
+    statusBar()->addPermanentWidget(new QLabel(options.to_string().c_str(), this));
 }
 
 void ClientGUI::EdgeButtonEvent()
