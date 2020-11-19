@@ -100,6 +100,7 @@ public:
 
 
 public slots:
+  virtual void PassButtonEvent();
   virtual void RetractButtonEvent();
   void com_act();
 
@@ -107,7 +108,7 @@ protected:
   virtual bool try_act(const EdgeButton* target_edge) override;
 
 private:
-  virtual void switch_player() override {} // do nothing
+  virtual void switch_player() override;
 
   AI ai_;
   const bool is_offen_;

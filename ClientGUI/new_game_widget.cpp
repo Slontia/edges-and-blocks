@@ -33,44 +33,38 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
   QObject::connect(start_game_btn_, SIGNAL(clicked()), this, SLOT(start_game()));
   start_game_btn_->setFixedSize(100, 30);
   start_game_btn_->move(10, 25);
-  
-  game_type_gbtn_->addButton(local_game_rbtn_, LOCAL_GAME);
-  QObject::connect(local_game_rbtn_, SIGNAL(clicked(bool)), this, SLOT(refresh_enable_options()));
-  local_game_rbtn_->move(115, 5);
+
+  auto add_game_type_option = [this](QAbstractButton* const rbtn, const QPoint& pos, const int game_type)
+  {
+		game_type_gbtn_->addButton(rbtn, game_type);
+		QObject::connect(rbtn, SIGNAL(clicked(bool)), this, SLOT(refresh_enable_options()));
+		rbtn->move(pos);
+  };
+  add_game_type_option(local_game_rbtn_, QPoint(115, 5), LOCAL_GAME);
+  add_game_type_option(com_game_rbtn_, QPoint(115, 25), COM_GAME);
+  add_game_type_option(network_game_rbtn_, QPoint(115, 45), NETWORK_GAME);
   local_game_rbtn_->setChecked(true);
+  refresh_enable_options();
 
-  game_type_gbtn_->addButton(com_game_rbtn_, COM_GAME);
-  QObject::connect(com_game_rbtn_, SIGNAL(clicked(bool)), this, SLOT(refresh_enable_options()));
-  com_game_rbtn_->move(115, 25);
-
-  game_type_gbtn_->addButton(network_game_rbtn_, NETWORK_GAME);
-  QObject::connect(network_game_rbtn_, SIGNAL(clicked(bool)), this, SLOT(refresh_enable_options()));
-  network_game_rbtn_->move(115, 45);
-
-  auto ip_label = new QLabel("IP Address:", this);
-  ip_label->move(20, 75);
-  ip_label->setFixedSize(70, 20);
-  TCHAR ip_conf_buf[20] = { 0 };
-  GetPrivateProfileString(TEXT("Server"), TEXT("ip"), TEXT("127.0.0.1\0"), ip_conf_buf, 20, config_file_name);
-  QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
-  QRegExp ipRegex("^" + ipRange + "\\." + ipRange + "\\." + ipRange + "\\." + ipRange + "$");
-  ip_edit_->setValidator(new QRegExpValidator(ipRegex, ip_edit_));
-  ip_edit_->setText(QString::fromWCharArray(ip_conf_buf, wcslen(ip_conf_buf)));
-  ip_edit_->move(100, 75);
-  ip_edit_->setFixedSize(110, 20);
-
-  auto port_label = new QLabel("Port:", this);
-  port_label->move(20, 100);
-  port_label->setFixedSize(70, 20);
-  TCHAR port_conf_buf[20] = { 0 };
-  GetPrivateProfileString(TEXT("Server"), TEXT("port"), TEXT("9810\0"), port_conf_buf, 20, config_file_name);
-  port_edit_->setValidator(new QIntValidator(port_edit_));
-  port_edit_->setText(QString::fromWCharArray(port_conf_buf, wcslen(port_conf_buf)));
-  port_edit_->move(100, 100);
-  port_edit_->setFixedSize(40, 20);
+  auto add_network_options = [this](auto&& label_str, QLineEdit* const edit, const QValidator* const validator, const QPoint& pos, const int edit_len, auto&& default_value)
+  {
+		auto label = new QLabel(QString::fromWCharArray(label_str), this);
+		label->move(pos);
+		label->setFixedSize(70, 20);
+		TCHAR buf[20] = { 0 };
+		GetPrivateProfileString(TEXT("Server"), LPCTSTR(label_str), LPCTSTR(default_value), buf, 20, config_file_name);
+		edit->setValidator(validator);
+		edit->setText(QString::fromWCharArray(buf, wcslen(buf)));
+		edit->move(pos.x() + 80, pos.y());
+		edit->setFixedSize(edit_len, 20);
+  };
+  const QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
+  const QRegExp ipRegex("^" + ipRange + "\\." + ipRange + "\\." + ipRange + "\\." + ipRange + "$");
+  add_network_options(TEXT("IP Address"), ip_edit_, new QRegExpValidator(ipRegex, ip_edit_), QPoint(20, 75), 110, TEXT("127.0.0.1\0"));
+  add_network_options(TEXT("Port"), port_edit_, new QIntValidator(port_edit_), QPoint(20, 100), 40, TEXT("9810\0"));
   port_edit_->setMaxLength(5);
 
-  const auto add_spin_box = [this](const char* const label_str, QSpinBox* spin_box, const QPoint& pos, const int min, const int max, const int default_value)
+  const auto add_game_options = [this](auto&& label_str, QSpinBox* spin_box, const QPoint& pos, const int min, const int max, const int default_value)
   {
 		auto label = new QLabel(label_str, this);
 		label->move(pos);
@@ -81,13 +75,11 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
 		spin_box->setFixedSize(40, 20);
     spin_box->setValue(default_value);
   };
+  add_game_options("Side Length", side_len_spin_, QPoint(20, 125), 2, 8, 6);
+  add_game_options("Winner Block Num", win_blocks_spin_, QPoint(20, 150), 2, 10, 5);
+  add_game_options("Firsthand Hold Edges", init_offen_edges_spin_, QPoint(20, 175), 4, 99, 6);
+  add_game_options("Backhand Hold Edges", init_defen_edges_spin_, QPoint(20, 200), 4, 99, 6);
 
-  add_spin_box("Side Length:", side_len_spin_, QPoint(20, 125), 2, 8, 6);
-  add_spin_box("Winner Block Num:", win_blocks_spin_, QPoint(20, 150), 2, 10, 5);
-  add_spin_box("Firsthand Hold Edges:", init_offen_edges_spin_, QPoint(20, 175), 4, 99, 6);
-  add_spin_box("Backhand Hold Edges:", init_defen_edges_spin_, QPoint(20, 200), 4, 99, 6);
-
-  refresh_enable_options();
 }
 
 void NewGameWidget::start_game()
@@ -127,8 +119,8 @@ void NewGameWidget::wait_for_open_client_gui_network()
       auto client_gui = std::make_shared<ClientGUINetwork>(std::move(client_), is_offen, this);
       open_client_gui(std::static_pointer_cast<ClientGUI>(client_gui));
     });
-    WritePrivateProfileString(TEXT("Server"), TEXT("ip"), ip_edit_->text().toStdWString().c_str(), TEXT(".\\config.ini"));
-    WritePrivateProfileString(TEXT("Server"), TEXT("port"), port_edit_->text().toStdWString().c_str(), TEXT(".\\config.ini"));
+    WritePrivateProfileString(TEXT("Server"), TEXT("IP Address"), ip_edit_->text().toStdWString().c_str(), config_file_name);
+    WritePrivateProfileString(TEXT("Server"), TEXT("Port"), port_edit_->text().toStdWString().c_str(), config_file_name);
   }
   catch (std::exception& e)
   {

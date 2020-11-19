@@ -144,8 +144,8 @@ void ClientGUI::start_new_game()
   QApplication::beep();
   if (QMessageBox::question(this, "New Game", "Quit and start a new game?") == QMessageBox::Yes)
   {
-		parentWidget()->show();
-		close();
+    parentWidget()->show();
+    close();
   }
 }
 
@@ -210,7 +210,7 @@ void ClientGUINetwork::receive_and_process_request_async()
       const PlaceRequest& place_request = *reinterpret_cast<PlaceRequest* const>(request);
       impl_game_variety(
         game_->Place(place_request.edge_type_, place_request.pos_, turning_switcher_->get_turn()));
-      turning_switcher_->switch_turn();
+      switch_player();
     }
     else if (request->type_ == PASS_REQUEST)
     {
@@ -270,15 +270,15 @@ bool ClientGUINetwork::try_act(const EdgeButton* target_edge)
   if (!ClientGUI::try_act(target_edge)) return false;
   try
   {
-		if (const EdgeButton* selected_edge = select_manager_->get_edge())
-		{
-			client_->send_request(MoveRequest(selected_edge->get_edge_type(), selected_edge->get_pos(),
-														target_edge->get_edge_type(), target_edge->get_pos()));
-		}
-		else
-		{
-			client_->send_request(PlaceRequest(target_edge->get_edge_type(), target_edge->get_pos()));
-		}
+    if (const EdgeButton* selected_edge = select_manager_->get_edge())
+    {
+      client_->send_request(MoveRequest(selected_edge->get_edge_type(), selected_edge->get_pos(),
+                            target_edge->get_edge_type(), target_edge->get_pos()));
+    }
+    else
+    {
+      client_->send_request(PlaceRequest(target_edge->get_edge_type(), target_edge->get_pos()));
+    }
   }
   catch (std::exception e)
   {
@@ -336,21 +336,21 @@ void ClientGUINetwork::switch_player()
 
 void ClientGUINetwork::lost_connection()
 {
-	QMessageBox::information(this, "Info", "Lost connection with your opponent.");
-	set_act_enable(false);
+  QMessageBox::information(this, "Info", "Lost connection with your opponent.");
+  set_act_enable(false);
 }
 
 ClientGUICom::ClientGUICom(const GameOptions& options, const bool is_offen, const uint32_t level, QWidget* parent)
   : ClientGUI(options, parent), ai_(*game_, is_offen ? DEFEN_PLAYER : OFFEN_PLAYER, level), is_offen_(is_offen)
 {
-	QObject::connect(&ai_, SIGNAL(act_over()), this, SLOT(com_act()));
+  QObject::connect(&ai_, SIGNAL(act_over()), this, SLOT(com_act()));
   if (is_offen)
   {
     board_->set_hover_color(OFFEN_PLAYER);
   }
   else
   {
-		set_act_enable(false);
+    set_act_enable(false);
     board_->set_hover_color(DEFEN_PLAYER);
     ai_.act_first_async();
   }
@@ -364,9 +364,9 @@ void ClientGUICom::com_act()
   }
   if (!game_->is_over())
   {
-		turning_switcher_->switch_turn();
-		set_act_enable(true);
+    set_act_enable(true);
   }
+  switch_player();
   functions_->retract_->setEnabled(game_->get_round() > 1);
 }
 
@@ -375,11 +375,30 @@ bool ClientGUICom::try_act(const EdgeButton* target_edge)
   if (!ClientGUI::try_act(target_edge)) { return false; }
   if (!game_->is_over())
   {
-		set_act_enable(false);
-		turning_switcher_->switch_turn();
+    set_act_enable(false);
     ai_.act_async();
   } // TODO: consider retract
   return true;
+}
+
+void ClientGUICom::switch_player()
+{
+  turning_switcher_->switch_turn();
+}
+
+void ClientGUICom::PassButtonEvent()
+{
+  notification_->clear();
+  game_->Pass();
+  select_manager_->clear_edge();
+  if (game_->get_round() > 1) { functions_->retract_->setEnabled(true); }
+  switch_player();
+  judge_over();
+  if (!game_->is_over())
+  {
+    set_act_enable(false);
+    ai_.act_async();
+  }
 }
 
 void ClientGUICom::RetractButtonEvent()
@@ -387,16 +406,16 @@ void ClientGUICom::RetractButtonEvent()
   notification_->clear();
   try
   {
-    reset_game_variety(game_->Retract());
-    if (!game_->is_over() || ((turning_switcher_->get_turn() == OFFEN_PLAYER) ^ is_offen_))
+    if (!(turning_switcher_->get_turn() == OFFEN_PLAYER) ^ is_offen_)
     {
       // if game is not over or computer has just acted, retract twice
-			reset_game_variety(game_->Retract());
+      reset_game_variety(game_->Retract());
     }
-    else
+    else if (game_->is_over())
     {
       turning_switcher_->switch_turn();
     }
+    reset_game_variety(game_->Retract());
     set_act_enable(true);
     // retract two actions each time
     if (game_->get_round() <= 1) { functions_->retract_->setEnabled(false); }
