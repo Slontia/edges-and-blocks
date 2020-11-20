@@ -1,6 +1,9 @@
 #include "board_widget.h"
+#include "ClientGUI.h"
 #include <cassert>
 #include <iostream>
+#include <QBitmap>
+#include <QPainter>
 #define REVERSE_PARA(a, b, reverse) (reverse) ? (b) : (a), (reverse) ? (a) : (b)
 
 std::unordered_map<int, QString> AreaButton::player2color_ =
@@ -60,7 +63,7 @@ void BlockButton::set_player(const PlayerType& old_player, const PlayerType& new
 }
 
 EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool& is_vert, QWidget* parent) :
-  AreaButton(QPoint(REVERSE_PARA(kZeroLoc, 0, is_vert)), pos, parent), 
+  AreaButton(QPoint(REVERSE_PARA(kZeroLoc - kEdgeWidth / 2 - kGapWidth / 2, 0, is_vert)), pos, parent), 
   edge_type_(is_vert ? VERT_EDGE_AREA : HORI_EDGE_AREA), 
   color_(player2color_[NO_PLAYER]), hover_color_("")
 {
@@ -68,15 +71,52 @@ EdgeButton::EdgeButton(const int& side_unit_num, const AreaPos& pos, const bool&
   const bool& is_side_edge = (is_vert ? pos.x() : pos.y()) == 0;
   if (is_side_edge)
   {
-    resize(REVERSE_PARA(kBlockSideLength, kUnitWidth * side_unit_num + kEdgeWidth / 2, is_vert));
-    setMask(QRegion(REVERSE_PARA(0, kEdgeWidth / 2, is_vert),
-            REVERSE_PARA(kBlockSideLength, kEdgeWidth / 2, is_vert)) +
-            QRegion(REVERSE_PARA(0, kUnitWidth * side_unit_num, is_vert),
-            REVERSE_PARA(kBlockSideLength, kEdgeWidth / 2, is_vert)));
+    const int cross_board_length = kUnitWidth * side_unit_num + kEdgeWidth;
+    resize(REVERSE_PARA(kEdgeLength, cross_board_length, is_vert));
+    // draw empty shape
+    QPixmap pix(size());
+    pix.fill(Qt::transparent);
+    QPainter painter(&pix);
+    painter.setPen(Qt::black);
+    painter.setBrush(Qt::SolidPattern);
+    const QPoint points1[4] =
+    {
+      QPoint(REVERSE_PARA(0,                                kEdgeWidth / 2, is_vert)),
+      QPoint(REVERSE_PARA(kEdgeWidth / 2,                   kEdgeWidth, is_vert)),
+      QPoint(REVERSE_PARA(kEdgeLength - 1 - kEdgeWidth / 2, kEdgeWidth, is_vert)),
+      QPoint(REVERSE_PARA(kEdgeLength - 1,                  kEdgeWidth / 2, is_vert))
+    };
+    const QPoint points2[4] =
+    {
+      QPoint(REVERSE_PARA(kEdgeLength - 1,                  cross_board_length - 1 - kEdgeWidth / 2,              is_vert)),
+      QPoint(REVERSE_PARA(kEdgeLength - 1 - kEdgeWidth / 2, cross_board_length - 1 - kEdgeWidth,              is_vert)),
+      QPoint(REVERSE_PARA(kEdgeWidth / 2,                   cross_board_length - 1 - kEdgeWidth,              is_vert)),
+      QPoint(REVERSE_PARA(0,                                cross_board_length - 1 - kEdgeWidth / 2,              is_vert))
+    };
+    painter.drawPolygon(points1, 4);
+    painter.drawPolygon(points2, 4);
+    setMask(pix.mask());
   }
   else
   {
-    resize(REVERSE_PARA(kBlockSideLength, kEdgeWidth, is_vert));
+    resize(REVERSE_PARA(kEdgeLength, kEdgeWidth, is_vert));
+    // draw edge button shape
+    QPixmap pix(size());
+    pix.fill(Qt::transparent);
+    QPainter painter(&pix);
+    painter.setPen(Qt::black);
+    painter.setBrush(Qt::SolidPattern);
+    const QPoint points[6] =
+    {
+      QPoint(REVERSE_PARA(0,                                kEdgeWidth / 2, is_vert)),
+      QPoint(REVERSE_PARA(kEdgeWidth / 2,                   kEdgeWidth - 1, is_vert)),
+      QPoint(REVERSE_PARA(kEdgeLength - 1 - kEdgeWidth / 2, kEdgeWidth - 1, is_vert)),
+      QPoint(REVERSE_PARA(kEdgeLength - 1,                  kEdgeWidth / 2, is_vert)),
+      QPoint(REVERSE_PARA(kEdgeLength - 1 - kEdgeWidth / 2, 0,              is_vert)),
+      QPoint(REVERSE_PARA(kEdgeWidth / 2,                   0,              is_vert))
+    };
+    painter.drawPolygon(points, 6);
+    setMask(pix.mask());
   }
   connect(this, SIGNAL(clicked()), parent->parentWidget(), SLOT(EdgeButtonEvent()));
 }
@@ -122,7 +162,7 @@ BoardWidget::BoardWidget(const unsigned int side_len, const QPoint& location, QW
       buttons_[VERT_EDGE_AREA][x].emplace_back(new EdgeButton(side_len_, pos, true, this));
     }
   }
-  move(location);
+  move(location + QPoint(kUnitWidth, kUnitWidth) * static_cast<double>(kMaxSideLen - side_len) / 2);
   resize(QSize(kUnitWidth, kUnitWidth) * side_len_ + QSize(kGapWidth + kEdgeWidth / 2, kGapWidth + kEdgeWidth / 2));
   play_sound_as_resource(START_GAME_WAVE);
 }

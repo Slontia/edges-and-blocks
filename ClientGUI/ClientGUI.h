@@ -15,6 +15,8 @@
 #define RESOURCE_BACKGROUND_PIC "/resources/background.jpg"
 #define RESOURCE_ICON "/resources/client.ico"
 
+static constexpr int kMaxSideLen = 8;
+
 class ClientAsyncWrapper;
 
 class ClientGUI;

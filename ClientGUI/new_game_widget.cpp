@@ -75,7 +75,7 @@ NewGameWidget::NewGameWidget(QWidget* parent) : QMainWindow(parent), client_(nul
 		spin_box->setFixedSize(40, 20);
     spin_box->setValue(default_value);
   };
-  add_game_options("Side Length", side_len_spin_, QPoint(20, 125), 2, 8, 6);
+  add_game_options("Side Length", side_len_spin_, QPoint(20, 125), 2, kMaxSideLen, 6);
   add_game_options("Winner Block Num", win_blocks_spin_, QPoint(20, 150), 2, 10, 5);
   add_game_options("Firsthand Hold Edges", init_offen_edges_spin_, QPoint(20, 175), 4, 99, 6);
   add_game_options("Backhand Hold Edges", init_defen_edges_spin_, QPoint(20, 200), 4, 99, 6);

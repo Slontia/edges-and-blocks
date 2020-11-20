@@ -13,12 +13,12 @@
 #include "ui_ClientGUI.h"
 #pragma comment(lib,"winmm.lib")
 
-static const int kBlockSideLength = 45;
-static const int kEdgeWidth = 16;
-static const int kGapWidth = 4;
-static const int kUnitWidth = kBlockSideLength + kEdgeWidth + kGapWidth * 2;
-
-static const int kZeroLoc = kEdgeWidth + kGapWidth;
+static constexpr int kBlockSideLength = 45;
+static constexpr int kEdgeWidth = 16; // better even
+static constexpr int kGapWidth = 4; // better even
+static constexpr int kEdgeLength = kBlockSideLength + kEdgeWidth + kGapWidth;
+static constexpr int kUnitWidth = kBlockSideLength + kEdgeWidth + kGapWidth * 2;
+static constexpr int kZeroLoc = kEdgeWidth + kGapWidth; // the x or y of the first block
 
 typedef QPoint AreaPos;
 
