@@ -13,7 +13,7 @@
 #include "moving_selector.h"
 
 #define RESOURCE_BACKGROUND_PIC "/resources/background.jpg"
-#define RESOURCE_ICON "/resources/client.ico"
+#define RESOURCE_ICON "/resources/icon.ico"
 
 static constexpr int kMaxSideLen = 8;
 
@@ -41,6 +41,7 @@ public slots:
   virtual void PassButtonEvent();
   virtual void RetractButtonEvent();
   virtual void start_new_game();
+  void show_about();
   
 protected:
   std::unique_ptr<MovingSelectManager> select_manager_;
@@ -95,7 +96,6 @@ private:
 class ClientGUICom : public ClientGUI
 {
   Q_OBJECT
-
 
 public:
   ClientGUICom(const GameOptions& options, const bool is_offen, const uint32_t level, QWidget* parent = Q_NULLPTR);

@@ -14,6 +14,7 @@
 #include <QDir>
 #include <QCloseEvent>
 #include <QLabel>
+#include <QDesktopServices>
 
 ClientGUI::ClientGUI(const GameOptions& options, QWidget *parent)
     : QMainWindow(parent), game_(std::make_unique<Game>(options)), select_manager_(std::make_unique<MovingSelectManager>())
@@ -49,7 +50,20 @@ ClientGUI::ClientGUI(const GameOptions& options, QWidget *parent)
     game_menu->addAction(new_game_action);
     connect(new_game_action, SIGNAL(triggered()), this, SLOT(start_new_game()));
 
+    QMenu* about_menu = menuBar()->addMenu(tr("Help"));
+    QAction* about_action = new QAction(tr("About"));
+    about_menu->addAction(about_action);
+    connect(about_action, SIGNAL(triggered()), this, SLOT(show_about()));
+
     statusBar()->addPermanentWidget(new QLabel(options.to_string().c_str(), this));
+}
+
+void ClientGUI::show_about()
+{
+  if (QMessageBox::information(this, tr("About"), tr("Author: Slontia\nVersion: 1.1.0.37"), "Go to github page", "OK") == 0)
+  {
+    QDesktopServices::openUrl(QUrl(QLatin1String("https://github.com/Slontia/edges-and-blocks")));
+  }
 }
 
 void ClientGUI::EdgeButtonEvent()
