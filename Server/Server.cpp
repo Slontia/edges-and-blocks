@@ -1,5 +1,3 @@
-// Server.cpp: 定义控制台应用程序的入口点。
-//
 #include "stdafx.h"
 #include <stdio.h>
 #include <Winsock2.h>
@@ -11,6 +9,8 @@
 #include <thread>
 #include <random>
 #include <ctime>
+#include <fstream>
+#include <string>
 #include "requests.h"
 #pragma comment(lib, "ws2_32.lib")
 
@@ -100,12 +100,17 @@ private:
 
   static SOCKET init_socket_listener()
   {
+    static auto kConfigFile = TEXT(".\\server-config.ini");
     try
     {
       WSADATA wsaData;
       ::start_up_winsock(wsaData);
       SOCKET sListen = ::create_socket_with_tcp();
-      int port = GetPrivateProfileInt(TEXT("Server"), TEXT("port"), kDefaultServerPort, TEXT(".\\config.ini"));
+      if (std::ifstream ifile(kConfigFile); !ifile)
+      {
+				WritePrivateProfileString(TEXT("Server"), TEXT("Port"), std::to_wstring(kDefaultServerPort).c_str(), kConfigFile);
+      }
+      int port = GetPrivateProfileInt(TEXT("Server"), TEXT("port"), kDefaultServerPort, kConfigFile);
       std::cout << "Init socket listener with port " << port << std::endl;
       bind_socket_listener(sListen, port);
       begin_listen(sListen);
