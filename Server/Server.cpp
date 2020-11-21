@@ -9,6 +9,8 @@
 #include <cassert>
 #include <array>
 #include <thread>
+#include <random>
+#include <ctime>
 #include "requests.h"
 #pragma comment(lib, "ws2_32.lib")
 
@@ -174,7 +176,8 @@ private:
   static void send_start_game_requests(const std::array<SOCKET, 2>& sServer)
   {
     /* TODO: make is_offen random. */
-    bool is_offen = true;
+    std::srand(std::time(nullptr));
+    bool is_offen = std::rand() % 2;
     for (int i = 0; i < 2; ++i)
     {
       /* TODO: check exception. */

@@ -3,6 +3,8 @@
 #include "client.h"
 #include <iostream>
 #include <cassert>
+#include <random>
+#include <ctime>
 #include <QDebug>
 #include <QMessageBox>
 #include <QLineEdit>
@@ -92,15 +94,22 @@ void NewGameWidget::start_game()
   switch (game_type_gbtn_->checkedId())
   {
   case LOCAL_GAME:
+  {
     open_client_gui(std::make_shared<ClientGUI>(options, this));
     break;
+  }
   case COM_GAME:
+  {
+    std::srand(std::time(nullptr));
     open_client_gui(std::static_pointer_cast<ClientGUI>(
-      std::make_shared<ClientGUICom>(options, false, 1, this)));
+      std::make_shared<ClientGUICom>(options, std::rand() % 2, 1, this)));
     break;
+  }
   case NETWORK_GAME:
+  {
     wait_for_open_client_gui_network();
     break;
+  }
   default:
     assert(false);
   }

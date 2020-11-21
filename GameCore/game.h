@@ -1,7 +1,7 @@
 #ifdef ADD_OPTION
 
-ADD_OPTION(unsigned int, side_len, 4)
-ADD_OPTION(unsigned int, winner_block_occu_count, 5)
+ADD_OPTION(unsigned int, side_len, 6)
+ADD_OPTION(unsigned int, winner_block_occu_count, 3)
 ADD_OPTION(unsigned int, init_offen_edge_own_count, 6)
 ADD_OPTION(unsigned int, init_defen_edge_own_count, 6)
 
