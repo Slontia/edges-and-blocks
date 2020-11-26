@@ -1,6 +1,7 @@
-#include "stdafx.h"
+#if _WIN32
+  #include "stdafx.h"
+#endif
 #include <stdio.h>
-#include <Winsock2.h>
 #include <signal.h>
 #include <exception>
 #include <iostream>
@@ -10,9 +11,9 @@
 #include <random>
 #include <ctime>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include "requests.h"
-#pragma comment(lib, "ws2_32.lib")
 
 static const int kDefaultServerPort = 9810;
 
@@ -23,7 +24,7 @@ public:
   {
     if (sListen_ == INVALID_SOCKET)
     {
-      throw std::exception("Server boot failed.");
+      throw std::runtime_error("Server boot failed.");
     }
   }
 
@@ -65,7 +66,7 @@ public:
       }
       printf("[game_id:%llu] Send to player %d\n", game_id, player_no);
     }
-    closesocket(sServer[0]);
+    close(sServer[0]);
     closesocket(sServer[1]);
   }
 
@@ -75,17 +76,72 @@ private:
   SOCKET sListen_;
   int port_;
 
+  static int get_port()
+  {
+    static constexpr auto kConfigFile =
+#if _WIN32
+      TEXT
+#endif
+    ("server-port");
+    int port = kDefaultServerPort;
+    std::fstream file(kConfigFile);
+    if (file)
+    {
+      file >> port;
+    }
+    std::cout << "Input server port (default: " << port << "): ";
+    if (std::string port_s; std::getline(std::cin, port_s), !port_s.empty())
+    {
+      if (int port_tmp = 0; !(std::stringstream(port_s) >> port_tmp))
+      {
+        throw std::runtime_error("invalid port.");
+      }
+      else
+      {
+        port = port_tmp;
+      }
+    }
+    file << port;
+    file.close();
+    std::cout << "Init socket listener with port " << port << std::endl;
+    return port;
+  }
+
+  static SOCKET init_socket_listener()
+  {
+    try
+    {
+#if _WIN32
+      WSADATA wsaData; // wsa data cannot be released
+      ::start_up_winsock(wsaData);
+#endif
+      SOCKET sListen = ::create_socket_with_tcp();
+      bind_socket_listener(sListen, get_port());
+      begin_listen(sListen);
+      return sListen;
+    }
+    catch (const std::runtime_error& e)
+    {
+      std::cout << e.what() << std::endl;
+      return INVALID_SOCKET;
+    }
+  }
+
   static void bind_socket_listener(const SOCKET sListen, const int& port)
   {
     struct sockaddr_in saServer;
     saServer.sin_family = AF_INET;
     saServer.sin_port = htons(port);
-    saServer.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+    saServer.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(sListen, (struct sockaddr*)&saServer, sizeof(saServer)) == SOCKET_ERROR)
     {
       closesocket(sListen);
+#if _WIN32
       WSACleanup();
-      throw std::exception("bind() faild! code: " + WSAGetLastError());
+      throw std::runtime_error("bind() faild! code: " + WSAGetLastError());
+#else
+      throw std::runtime_error("bind() faild!");
+#endif
     }
   }
 
@@ -94,39 +150,19 @@ private:
     if (listen(sListen, 5) == SOCKET_ERROR)
     {
       closesocket(sListen);
-      throw std::exception("listen() faild! code: " + WSAGetLastError());
+#if _WIN32
+      throw std::runtime_error("listen() faild! code: " + WSAGetLastError());
+#else
+      throw std::runtime_error("listen() faild!");
+#endif
     }
   }
 
-  static SOCKET init_socket_listener()
-  {
-    static auto kConfigFile = TEXT(".\\server-config.ini");
-    try
-    {
-      WSADATA wsaData;
-      ::start_up_winsock(wsaData);
-      SOCKET sListen = ::create_socket_with_tcp();
-      if (std::ifstream ifile(kConfigFile); !ifile)
-      {
-				WritePrivateProfileString(TEXT("Server"), TEXT("Port"), std::to_wstring(kDefaultServerPort).c_str(), kConfigFile);
-      }
-      int port = GetPrivateProfileInt(TEXT("Server"), TEXT("port"), kDefaultServerPort, kConfigFile);
-      std::cout << "Init socket listener with port " << port << std::endl;
-      bind_socket_listener(sListen, port);
-      begin_listen(sListen);
-      return sListen;
-    }
-    catch (const std::exception& e)
-    {
-      std::cout << e.what() << std::endl;
-      return INVALID_SOCKET;
-    }
-  }
 
   static void wait_for_new_clients(const uint64_t game_id, std::array<SOCKET, 2>& sServer, const SOCKET sListen)
   {
     struct sockaddr_in saClient;
-    int length = sizeof(saClient);
+    socklen_t length = sizeof(saClient);
     for (int i = 0; i < 2; ++i)
     {
       if (sServer[i] == INVALID_SOCKET)
@@ -147,7 +183,7 @@ private:
     Request* request = ::receive_request(socket, request_buffer).first;
     if (request->type_ != HEARTBEAT_REQUEST)
     {
-      throw std::exception("Unexpected non-heartbeat request.");
+      throw std::runtime_error("Unexpected non-heartbeat request.");
     }
   }
 
@@ -163,7 +199,7 @@ private:
         send_heartbeat(sServer[i], SERVER_SOURCE);
         wait_for_heartbeat(sServer[i]);
       }
-      catch (const std::exception& e)
+      catch (const std::runtime_error& e)
       {
         std::cerr << e.what() << std::endl;
         closesocket(sServer[i]);
@@ -180,7 +216,6 @@ private:
 
   static void send_start_game_requests(const std::array<SOCKET, 2>& sServer)
   {
-    /* TODO: make is_offen random. */
     std::srand(std::time(nullptr));
     bool is_offen = std::rand() % 2;
     for (int i = 0; i < 2; ++i)

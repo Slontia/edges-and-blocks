@@ -1,11 +1,23 @@
 #pragma once
 
 #include "../GameCore/GameCore.h"
-#include <winsock2.h>
 #include <type_traits>
 #include <memory>
 #include <iostream>
-//#pragma comment(lib, "ws2_32.lib")
+#include <cstring>
+#if _WIN32
+  #include <winsock2.h>
+  #pragma comment(lib, "ws2_32.lib")
+#else
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <unistd.h>
+  #include <netinet/in.h>
+  using SOCKET = int;
+  constexpr SOCKET INVALID_SOCKET = -1;
+  constexpr int SOCKET_ERROR = -1;
+  #define closesocket close
+#endif
 
 #define MAX_REQUEST_SIZE 1024
 #define SOCKET_ACT_OK(ret /* int */) ((ret) != SOCKET_ERROR && (ret) != 0)
@@ -93,60 +105,65 @@ struct HeartbeatRequest : public Request
   HeartbeatRequest(SourceType source = UNKNOWN_SOURCE) : Request(HEARTBEAT_REQUEST, sizeof(HeartbeatRequest), source) {}
 };
 
-template <class R>
-void send_request(const R& request, const SOCKET socket)
+template <typename R>
+void send_request(R&& request, const SOCKET socket)
 {
   static_assert(std::is_base_of_v<Request, R>);
   std::cout << "Sending...";
   int ret = send(socket, reinterpret_cast<const char*>(&request), sizeof(request), 0);
   if (!SOCKET_ACT_OK(ret))
   {
-    throw std::exception("Send request failed.");
+    throw std::runtime_error("Send request failed.");
   }
   std::cout << request << std::endl;
 }
 
-inline void send_heartbeat(const SOCKET socket, SourceType source)
+void send_heartbeat(const SOCKET socket, SourceType source)
 {
   return send_request(HeartbeatRequest(source), socket);
 }
 
-inline const std::pair<Request*, int> receive_request(const SOCKET socket, char* buffer)
+const std::pair<Request*, int> receive_request(const SOCKET socket, char* buffer)
 {
   std::cout << "Receiving...";
   memset(buffer, 0, MAX_REQUEST_SIZE);
   int ret = recv(socket, buffer, MAX_REQUEST_SIZE, 0);
   if (!SOCKET_ACT_OK(ret))
   {
-    throw std::exception("Receive request failed.");
+    throw std::runtime_error("Receive request failed.");
   }
   Request* request = reinterpret_cast<Request* const>(buffer);
   std::cout << "[" << ret << "]" << *request << std::endl;
   return std::pair<Request*, int>(request, ret);
 }
 
-inline void start_up_winsock(WSADATA& wsaData)
+#if _WIN32
+void start_up_winsock(WSADATA& wsaData)
 {
   /* Use Winsock DLL v2.2 */
   WORD wVersionRequested = MAKEWORD(2, 2);
   if (WSAStartup(wVersionRequested, &wsaData) != 0)
   {
-    throw std::exception("WSAStartup() failed!");
+    throw std::runtime_error("WSAStartup() failed!");
   }
   if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
   {
     WSACleanup();
-    throw std::exception("Invalid WinSock version!");
+    throw std::runtime_error("Invalid WinSock version!");
   }
 }
+#endif
 
-inline SOCKET create_socket_with_tcp()
+SOCKET create_socket_with_tcp()
 {
   SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
   if (s == INVALID_SOCKET)
   {
+#if _WIN32
     WSACleanup();
-    throw std::exception("socket() failed!");
+#endif
+    throw std::runtime_error("socket() failed!");
   }
   return s;
 }
+
