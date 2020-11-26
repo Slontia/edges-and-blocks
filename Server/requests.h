@@ -108,7 +108,7 @@ struct HeartbeatRequest : public Request
 template <typename R>
 void send_request(R&& request, const SOCKET socket)
 {
-  static_assert(std::is_base_of_v<Request, R>);
+  static_assert(std::is_base_of_v<Request, std::remove_reference_t<R>>);
   std::cout << "Sending...";
   int ret = send(socket, reinterpret_cast<const char*>(&request), sizeof(request), 0);
   if (!SOCKET_ACT_OK(ret))
@@ -118,12 +118,12 @@ void send_request(R&& request, const SOCKET socket)
   std::cout << request << std::endl;
 }
 
-void send_heartbeat(const SOCKET socket, SourceType source)
+inline void send_heartbeat(const SOCKET socket, SourceType source)
 {
   return send_request(HeartbeatRequest(source), socket);
 }
 
-const std::pair<Request*, int> receive_request(const SOCKET socket, char* buffer)
+inline const std::pair<Request*, int> receive_request(const SOCKET socket, char* buffer)
 {
   std::cout << "Receiving...";
   memset(buffer, 0, MAX_REQUEST_SIZE);
@@ -138,7 +138,7 @@ const std::pair<Request*, int> receive_request(const SOCKET socket, char* buffer
 }
 
 #if _WIN32
-void start_up_winsock(WSADATA& wsaData)
+inline void start_up_winsock(WSADATA& wsaData)
 {
   /* Use Winsock DLL v2.2 */
   WORD wVersionRequested = MAKEWORD(2, 2);
@@ -154,7 +154,7 @@ void start_up_winsock(WSADATA& wsaData)
 }
 #endif
 
-SOCKET create_socket_with_tcp()
+inline SOCKET create_socket_with_tcp()
 {
   SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
   if (s == INVALID_SOCKET)

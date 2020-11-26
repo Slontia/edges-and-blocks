@@ -1,6 +1,3 @@
-#if _WIN32
-  #include "stdafx.h"
-#endif
 #include <stdio.h>
 #include <signal.h>
 #include <exception>
@@ -66,7 +63,7 @@ public:
       }
       printf("[game_id:%llu] Send to player %d\n", game_id, player_no);
     }
-    close(sServer[0]);
+    closesocket(sServer[0]);
     closesocket(sServer[1]);
   }
 
@@ -80,9 +77,10 @@ private:
   {
     static constexpr auto kConfigFile =
 #if _WIN32
-      TEXT
+      TEXT("server-port");
+#else
+      ("server-port");
 #endif
-    ("server-port");
     int port = kDefaultServerPort;
     std::fstream file(kConfigFile);
     if (file)
@@ -162,7 +160,12 @@ private:
   static void wait_for_new_clients(const uint64_t game_id, std::array<SOCKET, 2>& sServer, const SOCKET sListen)
   {
     struct sockaddr_in saClient;
-    socklen_t length = sizeof(saClient);
+#if _WIN32
+    int
+#else
+    socklen_t
+#endif
+      length = sizeof(saClient);
     for (int i = 0; i < 2; ++i)
     {
       if (sServer[i] == INVALID_SOCKET)
